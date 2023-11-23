@@ -21,36 +21,36 @@ public class TalkRoom {
 	static String ip;
 	static Integer port;
 	protected MyPanel p;
-	
-	
+
+
 	public TalkRoom(String id, String ip, Integer port) throws IOException {
 		this.id = id;
 		this.ip = ip;
 		this.port = port;
-		 
+
 		String IdProtocol = "ID";
 		String UserName = IdProtocol+"|"+this.id;
-		
+
 		//InetAddress ip = InetAddress.getByName("localhost");
 		Socket s = new Socket(ip, port);
 		is = new DataInputStream(s.getInputStream());
 		os = new DataOutputStream(s.getOutputStream());
 		//아이디 서버로 전달
 		os.writeUTF(UserName);
-	
-		
-		
+
+
+
 		p = new MyPanel();
 		Thread thread2 = new Thread(new Runnable() {
 			@Override
 			public void run() {
-				
+
 				while (true) {
 					try {
 						String msg = is.readUTF();
 
 						// 받은 패킷을 텍스트 영역에 표시한다.
-						textArea.append("RECIEVED: " + new String(msg) + "\n");
+						textArea.append(new String(msg) + "\n");
 					} catch (EOFException e) {
 						e.printStackTrace();
 						break;
@@ -72,8 +72,8 @@ public class TalkRoom {
 		textField = new JTextField(30);
 		textField.setBounds(12, 506, 357, 40);
 		textField.addActionListener(this);
-		
-		
+
+
 		textArea = new JTextArea(10, 30);
 		textArea.setBounds(12, 53, 357, 435);
 		textArea.setEditable(false);
@@ -81,29 +81,29 @@ public class TalkRoom {
 
 		add(textField);
 		add(textArea);
-		
+
 		setVisible(true);
-		
+
 	}
 
 		public void actionPerformed(ActionEvent evt) {
 			String s = textField.getText();
-			
+
 			//String MsgProtocol = "MESSAGE";
 			//String message = MsgProtocol+"|"+s;
-				
+
 			try {
 				os.writeUTF(s);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			textArea.append("SENT: " + s + "\n");
+			//textArea.append("SENT: " + s + "\n");
 			textField.selectAll();
 			textArea.setCaretPosition(textArea.getDocument().getLength());
 		}
 	}
 
 	public static void main(String[] args) throws IOException {
-		
+
 	}
 }

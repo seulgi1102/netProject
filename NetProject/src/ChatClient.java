@@ -86,8 +86,8 @@ public class ChatClient implements ActionListener{
 				ArrayList<String> list = new ChatServer().getUserList();
 				try {
 					
-					showWaitRoom(id, ip, port, list);
-		            //showTalkRoom(id, ip, port);
+					//showWaitRoom(id, ip, port, list);
+		            showTalkRoom(id, ip, port);
 		        } catch (IOException ex) {
 		            ex.printStackTrace();
 		        }
