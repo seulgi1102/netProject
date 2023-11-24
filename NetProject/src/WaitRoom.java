@@ -1,150 +1,229 @@
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
+import javax.swing.*;
+import javax.swing.border.LineBorder;
 
-import java.awt.Font;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.awt.BorderLayout;
-import java.awt.Container;
-import java.awt.EventQueue;
 
-import javax.swing.SwingConstants;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.BoxLayout;
-import javax.swing.DefaultListModel;
-
-import java.awt.Color;
-import java.awt.Component;
-
-import javax.swing.JList;
-import javax.swing.border.LineBorder;
-
-public class WaitRoom extends JPanel implements ActionListener{
-	protected JPanel panel;
-	protected JList frndList;
-	protected JTextField textField;
-	protected JPanel panelChoice;
-	protected JButton newRoom;
-	DataInputStream is;
-	DataOutputStream os;
-	static String id;
-	static String ip;
-	static Integer port;
-	static ArrayList<String> idList;
-	private JLabel lblL;
-
-
-	
-	public WaitRoom(String id, String ip, Integer port, ArrayList<String> initialIdList) throws IOException {
-		this.id = id;
-		this.ip = ip;
-		this.port = port;
-		
-
-		ChatServer.userList.add(this.id);  // Add the current user's id
-		
-        gui(initialIdList);
-		//1 this.idList = initialIdList;
-		
-		//1ChatServer.userList.add(this.id);
-		
-		//idList = ChatServer.getUserList();
-		//gui(idList);
-		
-		//1 gui(idList);
-		
-
+public class WaitRoom extends JPanel implements ActionListener {
+	public WaitRoom() {
 	}
-	//친구목록 업데이트
-		public void updateFriendList(ArrayList<String> list) {
-			DefaultListModel<String> listModel = new DefaultListModel<>();
-			for (String data : list) {
-	        listModel.addElement(data);
-			}
-			frndList.setModel(listModel);
-	    }
-	
-	public void gui(ArrayList<String> list) {
-		
-		setBounds(0,0,400,600);
-		setLayout(null);
-		
-		panel = new JPanel();
-		panel.setBackground(new Color(253, 237, 172));
-		panel.setBounds(57, 0, 343, 600);
-		add(panel);
-		panel.setLayout(null);
-		
-		JLabel frnd = new JLabel("친구");
-		frnd.setBounds(12, 5, 64, 31);
-		frnd.setFont(new Font("굴림", Font.BOLD, 20));
-		panel.add(frnd);
-		
-		
-		textField = new JTextField();
-		textField.setBounds(12, 31, 290, 31);
-		panel.add(textField);
-		textField.setText("이름 검색");
-		textField.setColumns(10);
-		
-		frndList = new JList();
-		frndList.setBounds(12, 72, 290, 510);
-		
-		panel.add(frndList);
-		updateFriendList(list);
-		
-		JButton newRoom = new JButton("+");
-		newRoom.setFont(new Font("굴림", Font.BOLD, 25));
-		newRoom.setBounds(276,8, 26,23);
-		newRoom.setBorder(new LineBorder(new Color(0, 0, 0)));
-		panel.add(newRoom);
-		
-		panelChoice = new JPanel();
-		panelChoice.setBackground(new Color(247, 196, 145));
-		panelChoice.setBounds(0, 0, 58, 600);
-		add(panelChoice);
-		panelChoice.setLayout(null);
-		
-		JLabel Home = new JLabel("H");
-		Home.setFont(new Font("굴림", Font.BOLD, 20));
-		Home.setBounds(7, 10, 43, 40);
-		Home.setHorizontalAlignment(SwingConstants.CENTER);
-		panelChoice.add(Home);
-		
-		lblL = new JLabel("R");
-		lblL.setFont(new Font("굴림", Font.BOLD, 20));
-		lblL.setHorizontalAlignment(SwingConstants.CENTER);
-		lblL.setBounds(7, 60, 43, 40);
-		panelChoice.add(lblL);
-		setVisible(true);
-		
-		newRoom.addActionListener(this);
-		
-		
-	}
-	
-	public static void main(String[] args) throws IOException {
-		
-	}
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		
-			showNewRoomPanel roomPanel = new showNewRoomPanel();
-			/*try {
-				showWaitRoom(id, ip, port);
-	            //showTalkRoom(id, ip, port);
-	        } catch (IOException ex) {
-	            ex.printStackTrace();
-	        }*/
-		
-		
-	}
+	protected JScrollPane scrollPane;
+	protected JLabel loggedInUser;
+    protected JPanel panel;
+    protected JList<String> frndList;
+    protected JTextField textField;
+    protected JPanel panelChoice;
+    protected JButton newRoom;
+    DataInputStream is;
+    DataOutputStream os;
+    static String id;
+    static String ip;
+    static Integer port;
+    static ArrayList<String> idList;
+    private JLabel lblL;
+
+    public static void main(String[] args) throws IOException {
+        // Add your main method code here if needed
+    }
+
+    public void start(String id, String ip, Integer port) throws IOException {
+        this.id = id;
+        this.ip = ip;
+        this.port = port;
+        this.idList = new ArrayList<>();
+
+        try {
+            Socket s = new Socket(ip, port);
+            is = new DataInputStream(s.getInputStream());
+            os = new DataOutputStream(s.getOutputStream());
+
+            sendThread sendThread = new sendThread(s, id, is, os);
+            sendThread.start();
+
+            // 서버로부터 현재 로그인한 유저 리스트를 받음.
+            receiveUserList(id);
+
+            // 받은 유저리스트로 gui를 초기화
+            gui(idList);
+
+            // 별도의 스레드를 시작하여 서버로부터 업데이트를 지속적으로 받음
+            new UpdateListener().start();
+
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    public void receiveUserList(String loggedInUser) throws IOException {
+    	while (true) {
+            String user = is.readUTF();
+        
+            if (user.equals("END")) {
+                break;
+            }
+            if (!user.equals("UPDATE")&&!user.equals(loggedInUser)) {
+                idList.add(user);
+            }
+            
+        }
+    }
+
+    //친구목록 업데이트
+    public void updateFriendList(ArrayList<String> list) {
+        DefaultListModel<String> listModel = new DefaultListModel<>();
+        for (String data : list) {
+            listModel.addElement(data);
+        }
+        frndList.setModel(listModel);
+    }
+
+    public void gui(ArrayList<String> list) {
+        setBounds(0, 0, 400, 600);
+        setLayout(null);
+
+        panel = new JPanel();
+        panel.setBackground(new Color(253, 237, 172));
+        panel.setBounds(57, 0, 343, 600);
+        add(panel);
+        panel.setLayout(null);
+
+        JLabel frnd = new JLabel("친구");
+        frnd.setBounds(12, 5, 64, 31);
+        frnd.setFont(new Font("굴림", Font.BOLD, 20));
+        panel.add(frnd);
+
+        textField = new JTextField();
+        textField.setBounds(12, 31, 290, 31);
+        panel.add(textField);
+        textField.setText("이름 검색");
+        textField.setColumns(10);
+
+        frndList = new JList<>();
+        frndList.setCellRenderer(new CustomListCellRenderer());
+        frndList.setBounds(12, 133, 290, 426);
+        panel.add(frndList);
+        updateFriendList(list);
+
+        scrollPane = new JScrollPane(frndList);
+        scrollPane.setBounds(12, 133, 290, 426);
+        panel.add(scrollPane);
+        
+        newRoom = new JButton("+");
+        newRoom.setFont(new Font("굴림", Font.BOLD, 25));
+        newRoom.setBounds(276, 8, 26, 23);
+        newRoom.setBorder(new LineBorder(new Color(0, 0, 0)));
+        panel.add(newRoom);
+
+        loggedInUser = new JLabel(id);
+        loggedInUser.setBounds(12, 72, 290, 51);
+        panel.add(loggedInUser);
+
+        
+        panelChoice = new JPanel();
+        panelChoice.setBackground(new Color(247, 196, 145));
+        panelChoice.setBounds(0, 0, 58, 600);
+        add(panelChoice);
+        panelChoice.setLayout(null);
+
+        JLabel Home = new JLabel("H");
+        Home.setFont(new Font("굴림", Font.BOLD, 20));
+        Home.setBounds(7, 10, 43, 40);
+        Home.setHorizontalAlignment(SwingConstants.CENTER);
+        panelChoice.add(Home);
+
+        lblL = new JLabel("R");
+        lblL.setFont(new Font("굴림", Font.BOLD, 20));
+        lblL.setHorizontalAlignment(SwingConstants.CENTER);
+        lblL.setBounds(7, 60, 43, 40);
+        panelChoice.add(lblL);
+
+        setVisible(true);
+
+        newRoom.addActionListener(this);
+        loggedInUser.addMouseListener(new MyMouseListener());
+    }
+    class MyMouseListener extends MouseAdapter{
+        public void mouseClicked(MouseEvent arg0) {    // 마우스 클릭 시
+        	ListItem listItem = new ListItem(id,null,null);
+        	showMyProfilePanel profilePanel = new showMyProfilePanel(listItem);
+        	
+        }        
+    }
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        showNewRoomPanel roomPanel = new showNewRoomPanel();
+            // Implement the logic for creating a new room or any other action
+    }
+    
+    // 리스트를 계속 업데이트해주는 스레드
+    class UpdateListener extends Thread {
+        public void run() {
+            try {
+                while (true) {
+                    String updateCommand = is.readUTF();
+                    if (updateCommand.equals("UPDATE")) {
+                        // Receive the updated user list from the server
+                        idList.clear();
+                        receiveUserList(id);
+                        
+                        // 새 유저 리스트로 GUI를 업데이트
+                        updateFriendList(idList);
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+}
+
+class sendThread extends Thread {
+    Socket socket = null;
+    String name;
+    DataInputStream is;
+    DataOutputStream os;
+
+    public sendThread(Socket socket, String name, DataInputStream is, DataOutputStream os) {
+        this.name = name;
+        this.socket = socket;
+        this.os = os;
+        this.is = is;
+    }
+
+    public void run() {
+        try {
+            os.writeUTF("ID:" + name);
+            os.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+//JList의 라벨의 형식
+
+class CustomListCellRenderer extends DefaultListCellRenderer {
+    private static final int PADDING = 15;
+
+    @Override
+    public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+
+        // 라벨을 커스터마이즈
+        label.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.BLACK), // Border color
+                BorderFactory.createEmptyBorder(PADDING, PADDING, PADDING, PADDING) // Padding
+        ));
+        return label;
+    }
 }

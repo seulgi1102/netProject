@@ -28,8 +28,8 @@ public class TalkRoom {
 		this.ip = ip;
 		this.port = port;
 
-		String IdProtocol = "ID";
-		String UserName = IdProtocol+"|"+this.id;
+		String IdProtocol = "ID:";
+		String UserName = IdProtocol+this.id;
 
 		//InetAddress ip = InetAddress.getByName("localhost");
 		Socket s = new Socket(ip, port);

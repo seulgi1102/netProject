@@ -1,94 +1,99 @@
 import java.io.*;
-import java.util.*;
 import java.net.*;
-import java.text.AttributedString;
+import java.util.ArrayList;
 
 public class ChatServer {
 
-	static ArrayList<ServerThread> list = new ArrayList<>();
-	static ArrayList<String> userList = new ArrayList<>();
+    static ArrayList<ServerThread> list = new ArrayList<>();
+    static ArrayList<String> userList = new ArrayList<>();
 
-	static int clientCount = 0;
-	static int i = 0;
-	public static void main(String[] args) throws IOException {
-		ServerSocket ssocket = new ServerSocket(5000);
+    public static void main(String[] args) throws IOException {
+        ServerSocket ssocket = new ServerSocket(5001);
 
-		Socket s;
+        while (true) {
+            Socket s = ssocket.accept();
+            DataInputStream is = new DataInputStream(s.getInputStream());
+            DataOutputStream os = new DataOutputStream(s.getOutputStream());
 
-		while (true) {
-			s = ssocket.accept();
+            // 클라이언트로부터 받은 유저아이디를 읽음
+            String id = is.readUTF();
+            String userId = addUser(id);
 
-			DataInputStream is = new DataInputStream(s.getInputStream());
-			DataOutputStream os = new DataOutputStream(s.getOutputStream());
-
-			//서버에서 id를 받아서 스레드를 만들음
-			String id = is.readUTF();
-
-			String[] parts = id.split("\\|");
-			String username=null;
-			if(parts[0].equals("ID")) {
-				username = parts[1];
-				userList.add(username);
-			}
-
-
-			ServerThread thread = new ServerThread(s, userList.get(i), is, os);
-			list.add(thread);
-			thread.start();
-			//os.writeUTF("ID"+"|"+userList.get(i));
-			clientCount++;
-			i++;
-			//sendUserListToAll();
-		}
-
-	}
-
-	/*
-	//새로운 사용자가 로그인하면 모든 클라이언트에게 사용자 목록을 전송하는 메서드
-	private static void sendUserListToAll() {
-        StringBuilder userListStr = new StringBuilder();
-        for (String user : userList) {
-            userListStr.append(user).append(",");
+            // 연결된 클라이언트들에게 유저리스트를 전송
+            sendUserList();
+            
+            ServerThread thread = new ServerThread(s, userId, userList, is, os);
+            list.add(thread);
+            thread.start();
         }
-        userListStr.deleteCharAt(userListStr.length() - 1);  // 마지막 쉼표 제거
+    }
+
+    // 리스트에 유저를 추가하고 유저의 아이디를 반환
+    public static String addUser(String id) {
+        String userId = null;
+        if (id.startsWith("ID:")) {
+            userId = id.substring(3);
+            userList.add(userId);
+        }
+        return userId;
+    }
+
+    // 연결된 클라이언트들에게 현재 사용자 목록을 모두 클라이언트에게 전송, 모두 전송하면 END
+    public static void sendUserList() {
         for (ServerThread t : list) {
             try {
-                t.os.writeUTF("updateUserList:" + userListStr.toString());
+                t.os.writeUTF("UPDATE");
+                for (String user : userList) {
+                    t.os.writeUTF(user);
+                }
+                // Signal the end of the user list
+                t.os.writeUTF("END");
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
-*/
-	public static ArrayList<String>getUserList(){return userList;}
 }
 
 class ServerThread extends Thread {
-	ChatServer sv = new ChatServer();
-	ArrayList<String> userList = sv.getUserList();
-	Scanner scn = new Scanner(System.in);
-	private String name;
-	final DataInputStream is;
-	final DataOutputStream os;
-	Socket s;
-	boolean active;
+    private String name;
+    final DataInputStream is;
+    final DataOutputStream os;
+    Socket s;
+    ArrayList<String> uList;
+	private boolean active;
 
-	public ServerThread(Socket s, String name, DataInputStream is, DataOutputStream os) {
-		this.is = is;
-		this.os = os;
-		this.name = name;
-		this.s = s;
-		this.active = true;
-	}
+    public ServerThread(Socket s, String name, ArrayList<String> list, DataInputStream is, DataOutputStream os) {
+        this.is = is;
+        this.os = os;
+        this.name = name;
+        this.s = s;
+        this.uList = list;
+    }
 
+    @Override
+    public void run() {
+    	try {
+        //모든 연결된 사용자에게 리스트가 업데이트될 필요가 있음을 알림, 새로운 유저가 로그인한경우
+            os.writeUTF("UPDATE");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-	@Override
-	public void run() {
-
+        // 업데이트된 리스트를 다시 전송
+        try {
+            for (String user : uList) {
+                os.writeUTF(user);
+            }
+            // 리스트의 끝을 사용자에게 알림
+            os.writeUTF("END");
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
 		String message;
 		while (true) {
 			try {
-
+	
 				message = is.readUTF();
 				System.out.println(message);
 
@@ -119,4 +124,5 @@ class ServerThread extends Thread {
 	}
 
 }
+
 

@@ -36,9 +36,11 @@ public class ChatClient implements ActionListener{
 		login.LoginBtn.addActionListener(this);
 		frame.setVisible(true);
 	}
-	void showWaitRoom(String id, String ip, Integer port, ArrayList<String> list) throws IOException {
+	void showWaitRoom(String id, String ip, Integer port) throws IOException {
         container.remove(login);
-        wait = new WaitRoom(id, ip, port, list);
+        wait = new WaitRoom();
+        
+        wait.start(id, ip, port);
         //roomList.add(wait);
         //handleLogin(roomList, id);
         container.add(wait);
@@ -83,11 +85,11 @@ public class ChatClient implements ActionListener{
 				String ip = login.editIP.getText();
 				Integer port = Integer.parseInt(login.editPort.getText());
 				//???
-				ArrayList<String> list = new ChatServer().getUserList();
+				//ArrayList<String> list = new ChatServer().getUserList();
 				try {
 					
-					//showWaitRoom(id, ip, port, list);
-		            showTalkRoom(id, ip, port);
+					showWaitRoom(id, ip, port);
+		            //showTalkRoom(id, ip, port);
 		        } catch (IOException ex) {
 		            ex.printStackTrace();
 		        }
