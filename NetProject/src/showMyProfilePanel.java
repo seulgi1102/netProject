@@ -95,30 +95,27 @@ class showMyProfilePanel extends JFrame implements ActionListener {
 			}
 			if(e.getSource()==editBtn) {
 				updateUserSettings(os);
+				dispose();
 			}
 		}
 		private void updateUserSettings(DataOutputStream os) {
-			String oldUserId = currentUser.getText(); // Assuming the current user ID is stored in getText() method
-
+		    String oldUserId = currentUser.getText(); // Assuming the current user ID is stored in getText() method
 		    String newUserId = textField.getText();
 		    String newStatus = statusTextField.getText();
 
+		    // Send the updated information to the server
+		    sendUserUpdate(oldUserId, newUserId, newStatus, os);
+		    // Dispose the profile panel
+		    dispose();
+		}
 
-	        ListItem updatedUser = new ListItem(newUserId, null, newStatus);
-
-	        // Send the updated information to the server
-	        sendUserUpdate(oldUserId, updatedUser, os);
-	        // Dispose the profile panel
-	        dispose();
-	    }
-
-		private void sendUserUpdate(String oldUserId, ListItem user, DataOutputStream os) {
+		private void sendUserUpdate(String oldUserId, String newUserId, String newStatus, DataOutputStream os) {
 		    try {
 		        // Send the updated user information to the server
 		        os.writeUTF("UPDATE_USER");
 		        os.writeUTF(oldUserId); // Send the old user ID
-		        os.writeUTF(user.getText()); // Send the new user ID
-		        os.writeUTF(user.getStatus()); // Send the new status
+		        os.writeUTF(newUserId); // Send the new user ID
+		        os.writeUTF(newStatus); // Send the new status
 
 		        // Notify the server that the data transmission is complete
 		        os.writeUTF("END_UPDATE");

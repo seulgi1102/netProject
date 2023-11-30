@@ -15,10 +15,12 @@ public class ChatServer {
             DataInputStream is = new DataInputStream(s.getInputStream());
             DataOutputStream os = new DataOutputStream(s.getOutputStream());
 
-            // 클라이언트로부터 받은 유저아이디를 읽음
+            // 클라이언트로부터 받은 유저 정보를 읽음
+           
             String id = is.readUTF();
             String userId = addUser(id);
 
+         
             // 연결된 클라이언트들에게 유저리스트를 전송
             sendUserList();
             
@@ -27,7 +29,6 @@ public class ChatServer {
             thread.start();
         }
     }
-
     // 리스트에 유저를 추가하고 유저의 아이디를 반환
     public static String addUser(String id) {
         String userId = null;
