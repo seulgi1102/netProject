@@ -27,7 +27,10 @@ public class WaitRoom extends JPanel implements ActionListener {
     static String id;
     static String ip;
     static Integer port;
+    static ArrayList<ListItem> listItem;
     static ArrayList<String> idList;
+    static ArrayList<String> statusList;
+    static ArrayList<Image> profilImageList;
     private JLabel lblL;
 
     public static void main(String[] args) throws IOException {
@@ -39,7 +42,7 @@ public class WaitRoom extends JPanel implements ActionListener {
         this.ip = ip;
         this.port = port;
         this.idList = new ArrayList<>();
-
+        this.listItem = new ArrayList<>();
         try {
             Socket s = new Socket(ip, port);
             is = new DataInputStream(s.getInputStream());
@@ -52,7 +55,8 @@ public class WaitRoom extends JPanel implements ActionListener {
             receiveUserList(id);
 
             // 받은 유저리스트로 gui를 초기화
-            gui(idList);
+            //gui(idList);
+            gui(listItem);
 
             // 별도의 스레드를 시작하여 서버로부터 업데이트를 지속적으로 받음
             new UpdateListener().start();
@@ -71,29 +75,42 @@ public class WaitRoom extends JPanel implements ActionListener {
                 break;
             }
             if (!user.equals("UPDATE")&&!user.equals(loggedInUser)) {
-                idList.add(user);
+                //idList.add(user);
+            	listItem.add(new ListItem(user,null,null));
             }
             
         }
     }
 
     //친구목록 업데이트
-    public void updateFriendList(ArrayList<String> list) {
-        DefaultListModel<String> listModel = new DefaultListModel<>();
-        for (String data : list) {
-            listModel.addElement(data);
+    public void updateFriendList(ArrayList<ListItem> list) {
+        DefaultListModel listModel = new DefaultListModel<>();
+        String imagePath = "C:\\Users\\USER\\git\\netProject\\NetProject\\src\\img\\defaultProfile.jpeg";
+        ImageIcon img = new ImageIcon(imagePath);
+        
+        for (ListItem data : list) {
+        	listModel.addElement(data);
+            //listModel.addElement(data);
         }
         frndList.setModel(listModel);
-    }
+    }/*
+    public void updateFriendList(ArrayList<ListItem> userList) {
+        DefaultListModel<ListItem> listModel = new DefaultListModel<>();
 
-    public void gui(ArrayList<String> list) {
+        for (ListItem listItem : userList) {
+            listModel.addElement(listItem);
+        }
+
+        frndList.setModel(listModel);
+    }*/
+    public void gui(ArrayList<ListItem> list) {
         setBounds(0, 0, 400, 600);
         setLayout(null);
 
         panel = new JPanel();
         panel.setBackground(new Color(253, 237, 172));
         panel.setBounds(57, 0, 343, 600);
-        add(panel);
+        add(panel);                       
         panel.setLayout(null);
 
         JLabel frnd = new JLabel("친구");
@@ -154,7 +171,7 @@ public class WaitRoom extends JPanel implements ActionListener {
     class MyMouseListener extends MouseAdapter{
         public void mouseClicked(MouseEvent arg0) {    // 마우스 클릭 시
         	ListItem listItem = new ListItem(id,null,null);
-        	showMyProfilePanel profilePanel = new showMyProfilePanel(listItem);
+        	showMyProfilePanel profilePanel = new showMyProfilePanel(listItem, os);
         	
         }        
     }
@@ -172,11 +189,11 @@ public class WaitRoom extends JPanel implements ActionListener {
                     String updateCommand = is.readUTF();
                     if (updateCommand.equals("UPDATE")) {
                         // Receive the updated user list from the server
-                        idList.clear();
+                        listItem.clear();
                         receiveUserList(id);
                         
                         // 새 유저 리스트로 GUI를 업데이트
-                        updateFriendList(idList);
+                        updateFriendList(listItem);
                     }
                 }
             } catch (IOException e) {
@@ -211,19 +228,41 @@ class sendThread extends Thread {
 }
 
 //JList의 라벨의 형식
-
 class CustomListCellRenderer extends DefaultListCellRenderer {
     private static final int PADDING = 15;
 
     @Override
     public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-
-        // 라벨을 커스터마이즈
-        label.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Color.BLACK), // Border color
-                BorderFactory.createEmptyBorder(PADDING, PADDING, PADDING, PADDING) // Padding
+        JPanel panel = new JPanel();
+        panel.setLayout(new BorderLayout());
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.BLACK),
+                BorderFactory.createEmptyBorder(PADDING, PADDING, PADDING, PADDING)
         ));
-        return label;
+
+        if (value instanceof ListItem) {
+            ListItem listItem = (ListItem) value;
+            JLabel labelImg = new JLabel();
+            if (listItem.getProfileImage() != null) {
+                // Get the ImageIcon from the ListItem
+                ImageIcon originalIcon = listItem.getProfileImage();
+
+                // Resize the ImageIcon to the desired width and height
+                int newWidth = 50; // Set the desired width
+                int newHeight = 50; // Set the desired height
+                Image scaledImage = originalIcon.getImage().getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
+                ImageIcon scaledIcon = new ImageIcon(scaledImage);
+
+                // Set the resized ImageIcon to the JLabel
+                labelImg.setIcon(scaledIcon);
+                panel.add(labelImg, BorderLayout.WEST);
+            }
+            JLabel labelText = new JLabel(listItem.getText());
+            JLabel labelStatus = new JLabel(listItem.getStatus());
+            panel.add(labelText, BorderLayout.CENTER);
+            panel.add(labelStatus, BorderLayout.EAST);
+        }
+
+        return panel;
     }
 }

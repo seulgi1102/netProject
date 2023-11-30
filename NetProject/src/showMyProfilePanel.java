@@ -3,6 +3,8 @@ import javax.swing.JFrame;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.DataOutputStream;
+import java.io.IOException;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -21,7 +23,9 @@ class showMyProfilePanel extends JFrame implements ActionListener {
 		protected JButton editBtn;
 		protected JButton closeBtn;
 		protected ListItem currentUser;
-		showMyProfilePanel(ListItem currentUser){
+		protected DataOutputStream os;
+		showMyProfilePanel(ListItem currentUser, DataOutputStream os){
+			this.os = os;
 			this.currentUser = currentUser;
 			setBounds(0, 0, 434, 422);
 			myProfilePanel = new JPanel();	
@@ -54,7 +58,7 @@ class showMyProfilePanel extends JFrame implements ActionListener {
 			lblNewLabel_1.setBounds(78, 179, 55, 29);
 			myProfilePanel.add(lblNewLabel_1);
 			
-			statusTextField = new JTextField();
+			statusTextField = new JTextField(currentUser.getStatus());
 			statusTextField.setColumns(10);
 			statusTextField.setBounds(133, 219, 194, 120);
 			myProfilePanel.add(statusTextField);
@@ -90,33 +94,42 @@ class showMyProfilePanel extends JFrame implements ActionListener {
 				// TODO Auto-generated method stub
 			}
 			if(e.getSource()==editBtn) {
-				updateUserSettings();
+				updateUserSettings(os);
 			}
 		}
-		private void updateUserSettings() {
-	        // Update the status and profile image for the currently logged-in user
-	        String newStatus = statusTextField.getText();
-	        // Set the profile image based on user input (you'll need to implement this)
-	        ImageIcon newProfileImage = getNewProfileImage(); 
+		private void updateUserSettings(DataOutputStream os) {
+			String oldUserId = currentUser.getText(); // Assuming the current user ID is stored in getText() method
 
-	        currentUser.setStatus(newStatus);
-	        currentUser.setProfileImage(newProfileImage);
+		    String newUserId = textField.getText();
+		    String newStatus = statusTextField.getText();
+
+
+	        ListItem updatedUser = new ListItem(newUserId, null, newStatus);
 
 	        // Send the updated information to the server
-	        sendUserUpdate(currentUser);
-
-	        // Update the JList with the new information
-	       // updateFriendList(idList);
+	        sendUserUpdate(oldUserId, updatedUser, os);
+	        // Dispose the profile panel
+	        dispose();
 	    }
 
-	    private void sendUserUpdate(ListItem user) {
-	        try {
-	            // Modify this method to send the updated profile information to the server
-	            // (e.g., user ID, new status, new profile image)
-	        } catch (Exception e) {
-	            e.printStackTrace();
-	        }
-	    }
+		private void sendUserUpdate(String oldUserId, ListItem user, DataOutputStream os) {
+		    try {
+		        // Send the updated user information to the server
+		        os.writeUTF("UPDATE_USER");
+		        os.writeUTF(oldUserId); // Send the old user ID
+		        os.writeUTF(user.getText()); // Send the new user ID
+		        os.writeUTF(user.getStatus()); // Send the new status
+
+		        // Notify the server that the data transmission is complete
+		        os.writeUTF("END_UPDATE");
+
+		        // Flush the output stream to ensure data is sent immediately
+		        os.flush();
+		    } catch (IOException e) {
+		        e.printStackTrace();
+		        // Handle the exception appropriately
+		    }
+		}
 
 	    private ImageIcon getNewProfileImage() {
 	        // Implement logic to get the new profile image (e.g., from file chooser)

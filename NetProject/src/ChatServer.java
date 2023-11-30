@@ -8,7 +8,7 @@ public class ChatServer {
     static ArrayList<String> userList = new ArrayList<>();
 
     public static void main(String[] args) throws IOException {
-        ServerSocket ssocket = new ServerSocket(5001);
+        ServerSocket ssocket = new ServerSocket(5000);
 
         while (true) {
             Socket s = ssocket.accept();
@@ -124,5 +124,3 @@ class ServerThread extends Thread {
 	}
 
 }
-
-
