@@ -39,8 +39,11 @@ public class ChatClient implements ActionListener{
 	void showWaitRoom(String id, String ip, Integer port) throws IOException {
         container.remove(login);
         wait = new WaitRoom();
-        
+        //
+        ChatServer chatServer = new ChatServer();
+        wait.setChatServer(chatServer);
         wait.start(id, ip, port);
+        //
         //roomList.add(wait);
         //handleLogin(roomList, id);
         container.add(wait);

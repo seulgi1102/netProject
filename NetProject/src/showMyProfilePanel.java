@@ -14,12 +14,13 @@ import javax.swing.JTextField;
 import java.awt.Font;
 import java.awt.Image;
 
+@SuppressWarnings("serial")
 class showMyProfilePanel extends JFrame implements ActionListener {
 		
+
 		JPanel myProfilePanel;
-		private JTextField textField;
+		private JLabel textField;
 		private JTextField statusTextField;
-		protected String currentUserId;
 		protected JButton editBtn;
 		protected JButton closeBtn;
 		protected ListItem currentUser;
@@ -33,7 +34,7 @@ class showMyProfilePanel extends JFrame implements ActionListener {
 			getContentPane().add(myProfilePanel);
 			myProfilePanel.setLayout(null);
 			
-			JButton editBtn = new JButton("편집");
+			editBtn = new JButton("편집");
 			editBtn.setBounds(327, 349, 81, 23);
 			myProfilePanel.add(editBtn);
 			
@@ -47,10 +48,10 @@ class showMyProfilePanel extends JFrame implements ActionListener {
 			closeBtn.setBounds(260, 349, 67, 23);
 			myProfilePanel.add(closeBtn);
 			
-			textField = new JTextField(currentUser.getText());
+			textField = new JLabel(this.currentUser.getText());
 			textField.setBounds(133, 181, 194, 29);
 			myProfilePanel.add(textField);
-			textField.setColumns(10);
+			
 			
 			JLabel lblNewLabel_1 = new JLabel("이름:");
 			lblNewLabel_1.setHorizontalAlignment(SwingConstants.LEFT);
@@ -58,13 +59,13 @@ class showMyProfilePanel extends JFrame implements ActionListener {
 			lblNewLabel_1.setBounds(78, 179, 55, 29);
 			myProfilePanel.add(lblNewLabel_1);
 			
-			statusTextField = new JTextField(currentUser.getStatus());
+			statusTextField = new JTextField(this.currentUser.getStatus());
 			statusTextField.setColumns(10);
 			statusTextField.setBounds(133, 219, 194, 120);
 			myProfilePanel.add(statusTextField);
 			
 			JLabel lblNewLabel_2 = new JLabel();
-			ImageIcon profileImageIcon = currentUser.getProfileImage();
+			ImageIcon profileImageIcon = this.currentUser.getProfileImage();
 	        Image scaledProfileImage = scaleImage(profileImageIcon.getImage(), 142, 131);
 	        ImageIcon scaledProfileImageIcon = new ImageIcon(scaledProfileImage);
 	        lblNewLabel_2.setIcon(scaledProfileImageIcon);
@@ -79,9 +80,9 @@ class showMyProfilePanel extends JFrame implements ActionListener {
 			myProfilePanel.add(lblNewLabel_1_1);
 			closeBtn.addActionListener(this);
 			editBtn.addActionListener(this);
-			
-			
 			setVisible(true);
+			
+			
 		}
 		private Image scaleImage(Image image, int width, int height) {
 	        return image.getScaledInstance(width, height, Image.SCALE_SMOOTH);
@@ -99,26 +100,24 @@ class showMyProfilePanel extends JFrame implements ActionListener {
 			}
 		}
 		private void updateUserSettings(DataOutputStream os) {
-		    String oldUserId = currentUser.getText(); // Assuming the current user ID is stored in getText() method
-		    String newUserId = textField.getText();
+		    String userId = currentUser.getText();
 		    String newStatus = statusTextField.getText();
 
 		    // Send the updated information to the server
-		    sendUserUpdate(oldUserId, newUserId, newStatus, os);
+		    sendUserUpdate(userId, newStatus, os);
 		    // Dispose the profile panel
 		    dispose();
 		}
 
-		private void sendUserUpdate(String oldUserId, String newUserId, String newStatus, DataOutputStream os) {
+		private void sendUserUpdate(String userId, String newStatus, DataOutputStream os) {
 		    try {
 		        // Send the updated user information to the server
-		        os.writeUTF("UPDATE_USER");
-		        os.writeUTF(oldUserId); // Send the old user ID
-		        os.writeUTF(newUserId); // Send the new user ID
+		        os.writeUTF("UPDATE_STATE");
+		        os.writeUTF(userId); // Send the old user ID 
 		        os.writeUTF(newStatus); // Send the new status
 
 		        // Notify the server that the data transmission is complete
-		        os.writeUTF("END_UPDATE");
+		        os.writeUTF("END_STATE");
 
 		        // Flush the output stream to ensure data is sent immediately
 		        os.flush();

@@ -3,6 +3,7 @@ import javax.swing.*;
 public class ListItem {
     private String text;  // User ID
     private ImageIcon profileImage;
+    private int roomNumber;
     private String status;
     private static String imagePath = "C:\\Users\\USER\\git\\netProject\\NetProject\\src\\img\\defaultProfile.jpeg";
     private static final ImageIcon DEFAULT_PROFILE_IMAGE = new ImageIcon(imagePath);
@@ -10,7 +11,7 @@ public class ListItem {
     public ListItem(String text, ImageIcon profileImage, String status) {
         this.text = text;
         this.profileImage = (profileImage != null) ? profileImage : DEFAULT_PROFILE_IMAGE;
-        this.status = status;
+        this.status = (status != null) ? status : "DEFAULT_STATUS";
     }
 
     public String getText() {
@@ -19,6 +20,13 @@ public class ListItem {
 
     public ImageIcon getProfileImage() {
         return profileImage;
+    }
+    public int getRoomNumber() {
+        return roomNumber;
+    }
+
+    public void setRoomNumber(int roomNumber) {
+        this.roomNumber = roomNumber;
     }
 
     public void setProfileImage(ImageIcon profileImage) {

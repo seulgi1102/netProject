@@ -13,8 +13,6 @@ import java.net.Socket;
 import java.util.ArrayList;
 
 public class WaitRoom extends JPanel implements ActionListener {
-	public WaitRoom() {
-	}
 	protected JScrollPane scrollPane;
 	protected JLabel loggedInUser;
     protected JPanel panel;
@@ -22,21 +20,29 @@ public class WaitRoom extends JPanel implements ActionListener {
     protected JTextField textField;
     protected JPanel panelChoice;
     protected JButton newRoom;
+    protected JLabel Home;
     DataInputStream is;
     DataOutputStream os;
-    static String id;
+    protected String id;
     static String ip;
     static Integer port;
-    static ArrayList<ListItem> listItem;
+    protected static ArrayList<ListItem> listItem;
     static ArrayList<String> idList;
     static ArrayList<String> statusList;
     static ArrayList<Image> profilImageList;
-    private JLabel lblL;
-
+    private JLabel Room;
+    private JPanel currentPanel;
+    private showAllRoomPanel allroom;
+    private ChatServer server;
+	public WaitRoom() {
+		currentPanel = panel;
+	}
     public static void main(String[] args) throws IOException {
         // Add your main method code here if needed
     }
-
+    public void setChatServer(ChatServer server) {
+        this.server = server;
+    }
     public void start(String id, String ip, Integer port) throws IOException {
         this.id = id;
         this.ip = ip;
@@ -53,7 +59,6 @@ public class WaitRoom extends JPanel implements ActionListener {
 
             // 서버로부터 현재 로그인한 유저 리스트를 받음.
             receiveUserList(id);
-
             // 받은 유저리스트로 gui를 초기화
             //gui(idList);
             gui(listItem);
@@ -74,7 +79,7 @@ public class WaitRoom extends JPanel implements ActionListener {
             if (user.equals("END")) {
                 break;
             }
-            if (!user.equals("UPDATE")&&!user.equals(loggedInUser)) {
+            if (!user.equals("UPDATE")) {
                 //idList.add(user);
             	listItem.add(new ListItem(user,null,null));
             }
@@ -89,8 +94,10 @@ public class WaitRoom extends JPanel implements ActionListener {
         ImageIcon img = new ImageIcon(imagePath);
         
         for (ListItem data : list) {
+        	if(!data.getText().equals(id)) {
         	listModel.addElement(data);
             //listModel.addElement(data);
+        	}
         }
         frndList.setModel(listModel);
     }/*
@@ -151,33 +158,64 @@ public class WaitRoom extends JPanel implements ActionListener {
         add(panelChoice);
         panelChoice.setLayout(null);
 
-        JLabel Home = new JLabel("H");
+        Home = new JLabel("H");
         Home.setFont(new Font("굴림", Font.BOLD, 20));
         Home.setBounds(7, 10, 43, 40);
         Home.setHorizontalAlignment(SwingConstants.CENTER);
         panelChoice.add(Home);
 
-        lblL = new JLabel("R");
-        lblL.setFont(new Font("굴림", Font.BOLD, 20));
-        lblL.setHorizontalAlignment(SwingConstants.CENTER);
-        lblL.setBounds(7, 60, 43, 40);
-        panelChoice.add(lblL);
+        Room = new JLabel("R");
+        Room.setFont(new Font("굴림", Font.BOLD, 20));
+        Room.setHorizontalAlignment(SwingConstants.CENTER);
+        Room.setBounds(7, 60, 43, 40);
+        panelChoice.add(Room);
 
         setVisible(true);
 
         newRoom.addActionListener(this);
         loggedInUser.addMouseListener(new MyMouseListener());
+        Room.addMouseListener(new MyMouseListener());
+        Home.addMouseListener(new MyMouseListener());
     }
-    class MyMouseListener extends MouseAdapter{
-        public void mouseClicked(MouseEvent arg0) {    // 마우스 클릭 시
-        	ListItem listItem = new ListItem(id,null,null);
-        	showMyProfilePanel profilePanel = new showMyProfilePanel(listItem, os);
-        	
-        }        
+    class MyMouseListener extends MouseAdapter {
+        public void mouseClicked(MouseEvent arg0) {
+        	System.out.println("Mouse clicked event triggered.");
+            if (arg0.getSource() == loggedInUser) { 
+            	 ListItem loggedInUserItem = null;
+                 for (ListItem item : listItem) {
+                     // Use equals() to compare strings
+                     if (item.getText().equals(id)) {
+                         loggedInUserItem = item;
+                         break;
+                     }
+                 }
+
+                 if (loggedInUserItem != null) {
+                     showMyProfilePanel profilePanel = new showMyProfilePanel(loggedInUserItem, os);
+                     profilePanel.setVisible(true);
+                 }
+            }
+            else if (arg0.getSource() == Room) {
+        		remove(panel);
+        		allroom = new showAllRoomPanel();
+                add(allroom);
+                revalidate();
+                repaint();
+            }
+
+            else if (arg0.getSource() == Home) {
+            	// Handle the "H" click event
+            	remove(allroom);
+            	add(panel);
+            	revalidate();
+            	repaint();
+            }      
+        }
     }
+ 
     @Override
     public void actionPerformed(ActionEvent e) {
-        showNewRoomPanel roomPanel = new showNewRoomPanel();
+        showNewRoomPanel roomPanel = new showNewRoomPanel(listItem, server);
             // Implement the logic for creating a new room or any other action
     }
     

@@ -5,10 +5,10 @@ import java.util.ArrayList;
 public class ChatServer {
 
     static ArrayList<ServerThread> list = new ArrayList<>();
-    static ArrayList<String> userList = new ArrayList<>();
+    static ArrayList<ListItem> itemList = new ArrayList<>();
 
     public static void main(String[] args) throws IOException {
-        ServerSocket ssocket = new ServerSocket(5000);
+        ServerSocket ssocket = new ServerSocket(5001);
 
         while (true) {
             Socket s = ssocket.accept();
@@ -24,7 +24,7 @@ public class ChatServer {
             // 연결된 클라이언트들에게 유저리스트를 전송
             sendUserList();
             
-            ServerThread thread = new ServerThread(s, userId, userList, is, os);
+            ServerThread thread = new ServerThread(s, userId, itemList, is, os);
             list.add(thread);
             thread.start();
         }
@@ -34,7 +34,7 @@ public class ChatServer {
         String userId = null;
         if (id.startsWith("ID:")) {
             userId = id.substring(3);
-            userList.add(userId);
+            itemList.add(new ListItem(userId, null, null));
         }
         return userId;
     }
@@ -44,8 +44,8 @@ public class ChatServer {
         for (ServerThread t : list) {
             try {
                 t.os.writeUTF("UPDATE");
-                for (String user : userList) {
-                    t.os.writeUTF(user);
+                for (ListItem item : itemList) {
+                    t.os.writeUTF(item.getText());
                 }
                 // Signal the end of the user list
                 t.os.writeUTF("END");
@@ -61,10 +61,10 @@ class ServerThread extends Thread {
     final DataInputStream is;
     final DataOutputStream os;
     Socket s;
-    ArrayList<String> uList;
+    ArrayList<ListItem> uList;
 	private boolean active;
 
-    public ServerThread(Socket s, String name, ArrayList<String> list, DataInputStream is, DataOutputStream os) {
+    public ServerThread(Socket s, String name, ArrayList<ListItem> list, DataInputStream is, DataOutputStream os) {
         this.is = is;
         this.os = os;
         this.name = name;
@@ -83,8 +83,8 @@ class ServerThread extends Thread {
 
         // 업데이트된 리스트를 다시 전송
         try {
-            for (String user : uList) {
-                os.writeUTF(user);
+            for (ListItem user : uList) {
+                os.writeUTF(user.getText());
             }
             // 리스트의 끝을 사용자에게 알림
             os.writeUTF("END");
