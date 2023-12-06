@@ -1,3 +1,4 @@
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
 import java.io.IOException;
@@ -10,6 +11,8 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.border.LineBorder;
+import java.awt.GridLayout;
+import java.awt.FlowLayout;
 
 public class waitRoom2 extends JPanel {
 	public static void main(String[] args) throws IOException {
@@ -37,7 +40,7 @@ public class waitRoom2 extends JPanel {
 	        textField.setColumns(10);
 
 	        JList frndList = new JList<>();
-	        frndList.setBounds(12, 133, 290, 426);
+	        frndList.setBounds(12, 173, 290, 386);
 	        panel.add(frndList);
 	        updateFriendList(list);
 	        frndList.setVisible(true);
@@ -48,9 +51,19 @@ public class waitRoom2 extends JPanel {
 	        newRoom.setBorder(new LineBorder(new Color(0, 0, 0)));
 	        panel.add(newRoom);
 	        
-	        JLabel loggedInUser = new JLabel();
-	        loggedInUser.setBounds(12, 72, 290, 51);
-	        panel.add(loggedInUser);
+	        JPanel panel_1 = new JPanel();
+	        panel_1.setBounds(12, 72, 290, 91);
+	        panel.add(panel_1);
+	        panel_1.setLayout(new BorderLayout());
+	        
+	        JLabel lblNewLabel = new JLabel("New label");
+	        panel_1.add(lblNewLabel, BorderLayout.WEST);
+	        
+	        JLabel lblNewLabel_1 = new JLabel("New label");
+	        panel_1.add(lblNewLabel_1, BorderLayout.CENTER);
+	        
+	        JLabel lblNewLabel_2 = new JLabel("New label");
+	        panel_1.add(lblNewLabel_2,BorderLayout.EAST);
 
 	        JPanel panelChoice = new JPanel();
 	        panelChoice.setBackground(new Color(247, 196, 145));

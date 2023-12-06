@@ -112,12 +112,12 @@ class showMyProfilePanel extends JFrame implements ActionListener {
 		private void sendUserUpdate(String userId, String newStatus, DataOutputStream os) {
 		    try {
 		        // Send the updated user information to the server
-		        os.writeUTF("UPDATE_STATE");
-		        os.writeUTF(userId); // Send the old user ID 
-		        os.writeUTF(newStatus); // Send the new status
+		        os.writeUTF("UPDATE");
+		        os.writeUTF("CURRENTUID:"+userId); // Send the old user ID 
+		        os.writeUTF("STATUS:"+newStatus); // Send the new status
 
 		        // Notify the server that the data transmission is complete
-		        os.writeUTF("END_STATE");
+		        os.writeUTF("END");
 
 		        // Flush the output stream to ensure data is sent immediately
 		        os.flush();

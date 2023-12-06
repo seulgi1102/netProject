@@ -1,4 +1,5 @@
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 
 import java.awt.*;
@@ -21,6 +22,8 @@ public class WaitRoom extends JPanel implements ActionListener {
     protected JPanel panelChoice;
     protected JButton newRoom;
     protected JLabel Home;
+    protected JLabel image;
+    protected JLabel currentStatus;
     DataInputStream is;
     DataOutputStream os;
     protected String id;
@@ -49,6 +52,7 @@ public class WaitRoom extends JPanel implements ActionListener {
         this.port = port;
         this.idList = new ArrayList<>();
         this.listItem = new ArrayList<>();
+        
         try {
             Socket s = new Socket(ip, port);
             is = new DataInputStream(s.getInputStream());
@@ -56,15 +60,15 @@ public class WaitRoom extends JPanel implements ActionListener {
 
             sendThread sendThread = new sendThread(s, id, is, os);
             sendThread.start();
-
+         
             // 서버로부터 현재 로그인한 유저 리스트를 받음.
-            receiveUserList(id);
+            receiveUserList(id, null);
             // 받은 유저리스트로 gui를 초기화
             //gui(idList);
             gui(listItem);
-
             // 별도의 스레드를 시작하여 서버로부터 업데이트를 지속적으로 받음
             new UpdateListener().start();
+            
 
 
 
@@ -72,6 +76,49 @@ public class WaitRoom extends JPanel implements ActionListener {
             e.printStackTrace();
         }
     }
+    private static ListItem findUserById(String userId) {
+    	ListItem userItem = null;
+        for (ListItem item : listItem) {
+            if (item.getText().equals(userId)) {
+            	userItem = item;
+                break;
+            }
+        }
+        return userItem;
+    }
+    //갱신된 아이템들을 리스트에 넣음
+    public void receiveUserList(String loggedInUser, String status) throws IOException {
+    	while (true) {
+            String user = is.readUTF(); //두번하면 두번 입력받아야됨..;
+            String id = null;
+            String state = status;
+            //sendUserList에서
+            if (user.equals("END")) {
+                break;
+            }
+            if (!user.equals("UPDATE")) {
+                // Split the received string using the delimiter
+                String[] parts = user.split("/");
+                
+                for (String part : parts) {
+                    if (part.startsWith("ID:")) {
+                        id = part.substring(3);
+                    }
+                    if (part.startsWith("STATUS:")) {
+                        state = part.substring(7);
+                        if(state.equals(null)) {
+                        	state = "";
+                        }
+                    }
+                }
+                //idList.add(user);
+            	//String status = is.readUTF();
+                listItem.add(new ListItem(id, null,state));
+            }
+            
+        }
+    }
+/*
     public void receiveUserList(String loggedInUser) throws IOException {
     	while (true) {
             String user = is.readUTF();
@@ -81,12 +128,24 @@ public class WaitRoom extends JPanel implements ActionListener {
             }
             if (!user.equals("UPDATE")) {
                 //idList.add(user);
-            	listItem.add(new ListItem(user,null,null));
+            	ListItem item = new ListItem(user,null,null);
+            	while(true) {
+            		String userd = is.readUTF();
+                    if (user.equals("END")) {
+                        break;
+                    }
+
+                    // Assuming the next readUTF() calls are for additional information
+                    
+                    // Add other fields as needed
+                    item.setStatus(userd);
+                    listItem.add(item);
+            	}
             }
             
         }
     }
-
+    */
     //친구목록 업데이트
     public void updateFriendList(ArrayList<ListItem> list) {
         DefaultListModel listModel = new DefaultListModel<>();
@@ -133,12 +192,14 @@ public class WaitRoom extends JPanel implements ActionListener {
 
         frndList = new JList<>();
         frndList.setCellRenderer(new CustomListCellRenderer());
-        frndList.setBounds(12, 133, 290, 426);
+        frndList.setBounds(12, 160, 290, 380);
+        frndList.setBorder(new LineBorder(Color.WHITE));
         panel.add(frndList);
         updateFriendList(list);
 
         scrollPane = new JScrollPane(frndList);
-        scrollPane.setBounds(12, 133, 290, 426);
+        scrollPane.setBounds(12, 160, 290, 380);
+        scrollPane.setBorder(new LineBorder(Color.WHITE));
         panel.add(scrollPane);
         
         newRoom = new JButton("+");
@@ -146,11 +207,37 @@ public class WaitRoom extends JPanel implements ActionListener {
         newRoom.setBounds(276, 8, 26, 23);
         newRoom.setBorder(new LineBorder(new Color(0, 0, 0)));
         panel.add(newRoom);
-
-        loggedInUser = new JLabel(id);
-        loggedInUser.setBounds(12, 72, 290, 51);
-        panel.add(loggedInUser);
-
+        
+        JPanel userInfo = new JPanel();
+        userInfo.setBounds(12, 72, 290, 80);
+        userInfo.setLayout(new GridLayout(1,2));   
+        userInfo.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.WHITE),
+                BorderFactory.createEmptyBorder(15, 15, 15, 15)
+        ));
+        
+        ListItem item =findUserById(id);      
+        loggedInUser = new JLabel(item.getText());
+        
+        
+        image = new JLabel();
+        ImageIcon originalIcon = item.getProfileImage();
+        // Resize the ImageIcon to the desired width and height
+        int newWidth = 50; // Set the desired width
+        int newHeight = 50; // Set the desired height
+        Image scaledImage = originalIcon.getImage().getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
+        ImageIcon scaledIcon = new ImageIcon(scaledImage);
+        
+        image.setIcon(scaledIcon);
+        
+        currentStatus = new JLabel(item.getStatus());
+        
+        
+        userInfo.add(image);
+        userInfo.add(loggedInUser);
+        userInfo.add(currentStatus);
+        
+        panel.add(userInfo);
         
         panelChoice = new JPanel();
         panelChoice.setBackground(new Color(247, 196, 145));
@@ -191,7 +278,7 @@ public class WaitRoom extends JPanel implements ActionListener {
                  }
 
                  if (loggedInUserItem != null) {
-                     showMyProfilePanel profilePanel = new showMyProfilePanel(loggedInUserItem, os);
+                     showMyProfilePanel profilePanel = new showMyProfilePanel(loggedInUserItem);
                      profilePanel.setVisible(true);
                  }
             }
@@ -215,7 +302,8 @@ public class WaitRoom extends JPanel implements ActionListener {
  
     @Override
     public void actionPerformed(ActionEvent e) {
-        showNewRoomPanel roomPanel = new showNewRoomPanel(listItem, server);
+    	ListItem item =findUserById(id);
+        showNewRoomPanel roomPanel = new showNewRoomPanel(listItem,item, server);
             // Implement the logic for creating a new room or any other action
     }
     
@@ -225,10 +313,28 @@ public class WaitRoom extends JPanel implements ActionListener {
             try {
                 while (true) {
                     String updateCommand = is.readUTF();
+                    String id = null;
+                    String status = null;
                     if (updateCommand.equals("UPDATE")) {
                         // Receive the updated user list from the server
-                        listItem.clear();
-                        receiveUserList(id);
+                        //수정이 필요
+                    	listItem.clear();
+                        /*String editStatus = null;
+                        ListItem loggedInUserItem = findUserById(id);
+                        if (loggedInUserItem != null) {
+                            editStatus = loggedInUserItem.getStatus();}*/
+                    	String[] parts = updateCommand.split("/");
+                        
+                        for (String part : parts) {
+                            if (part.startsWith("ID:")) {
+                                id = part.substring(3);
+                            }
+                            if (part.startsWith("STATUS:")) {
+                                status = part.substring(7);
+                            }
+                        }
+                        
+                        receiveUserList(id, status);
                         
                         // 새 유저 리스트로 GUI를 업데이트
                         updateFriendList(listItem);
@@ -240,6 +346,141 @@ public class WaitRoom extends JPanel implements ActionListener {
         }
     }
 
+
+
+    @SuppressWarnings("serial")
+    class showMyProfilePanel extends JFrame implements ActionListener {
+    		
+
+    		JPanel myProfilePanel;
+    		private JLabel textField;
+    		private JTextField statusTextField;
+    		protected JButton editBtn;
+    		protected JButton closeBtn;
+    		protected ListItem currentUser;
+    		
+    		showMyProfilePanel(ListItem currentUser){
+    			
+    			this.currentUser = currentUser;
+    			setBounds(0, 0, 434, 422);
+    			myProfilePanel = new JPanel();	
+    			myProfilePanel.setBounds(0, 0, 424, 404);
+    			getContentPane().add(myProfilePanel);
+    			myProfilePanel.setLayout(null);
+    			
+    			editBtn = new JButton("편집");
+    			editBtn.setBounds(327, 349, 81, 23);
+    			myProfilePanel.add(editBtn);
+    			
+    			JLabel lblNewLabel = new JLabel("상태 메시지:");
+    			lblNewLabel.setFont(new Font("맑은 고딕", Font.BOLD, 13));
+    			lblNewLabel.setHorizontalAlignment(SwingConstants.LEFT);
+    			lblNewLabel.setBounds(34, 208, 99, 33);
+    			myProfilePanel.add(lblNewLabel);
+    			
+    			closeBtn = new JButton("취소");
+    			closeBtn.setBounds(260, 349, 67, 23);
+    			myProfilePanel.add(closeBtn);
+    			
+    			textField = new JLabel(this.currentUser.getText());
+    			textField.setBounds(133, 181, 194, 29);
+    			myProfilePanel.add(textField);
+    			    			
+    			JLabel lblNewLabel_1 = new JLabel("이름:");
+    			lblNewLabel_1.setHorizontalAlignment(SwingConstants.LEFT);
+    			lblNewLabel_1.setFont(new Font("맑은 고딕", Font.BOLD, 13));
+    			lblNewLabel_1.setBounds(78, 179, 55, 29);
+    			myProfilePanel.add(lblNewLabel_1);
+    			
+    			statusTextField = new JTextField(this.currentUser.getStatus());
+    			statusTextField.setColumns(10);
+    			statusTextField.setBounds(133, 219, 194, 120);
+    			myProfilePanel.add(statusTextField);
+    			
+    			JLabel lblNewLabel_2 = new JLabel();
+    			ImageIcon profileImageIcon = this.currentUser.getProfileImage();
+    	        Image scaledProfileImage = scaleImage(profileImageIcon.getImage(), 142, 131);
+    	        ImageIcon scaledProfileImageIcon = new ImageIcon(scaledProfileImage);
+    	        lblNewLabel_2.setIcon(scaledProfileImageIcon);
+    			lblNewLabel_2.setHorizontalAlignment(SwingConstants.CENTER);
+    			lblNewLabel_2.setBounds(133, 40, 142, 131);
+    			myProfilePanel.add(lblNewLabel_2);
+    			
+    			JLabel lblNewLabel_1_1 = new JLabel("나의 프로필");
+    			lblNewLabel_1_1.setHorizontalAlignment(SwingConstants.LEFT);
+    			lblNewLabel_1_1.setFont(new Font("맑은 고딕", Font.BOLD, 17));
+    			lblNewLabel_1_1.setBounds(12, 10, 160, 44);
+    			myProfilePanel.add(lblNewLabel_1_1);
+    			closeBtn.addActionListener(this);
+    			editBtn.addActionListener(this);
+    			setVisible(true);
+    			
+    			
+    		}
+    		private Image scaleImage(Image image, int width, int height) {
+    	        return image.getScaledInstance(width, height, Image.SCALE_SMOOTH);
+    	    }
+
+    		@Override
+    		public void actionPerformed(ActionEvent e) {
+    			if(e.getSource()== closeBtn) {
+    				dispose();
+    				// TODO Auto-generated method stub
+    			}
+    			if(e.getSource()==editBtn) {
+    				updateUserSettings(os);
+    				sendRequestForUserList();
+    				currentStatus.setText(statusTextField.getText());
+    				//ChatServer.updateUser(currentUser.getText(), statusTextField.getText());
+    				//updateFriendList(listItem);
+    				dispose();
+    			}
+    		}
+    		//편집버튼을 누르면 유저의 리스트를 요구하는 메서드
+    		private void sendRequestForUserList() {
+    		    try {
+    		        os.writeUTF("REQUEST_USER_LIST");
+    		        os.flush();
+    		    } catch (IOException e) {
+    		        e.printStackTrace();
+    		        // Handle the exception appropriately
+    		    }
+    		}
+			private void updateUserSettings(DataOutputStream os) {
+    		    String userId = currentUser.getText();
+    		    String newStatus = statusTextField.getText();
+
+    		    // Send the updated information to the server
+    		    sendUserUpdate(userId, newStatus);
+    		    
+    		    dispose();
+    		}
+    		//server thread의 while로 전달됨.
+    		private void sendUserUpdate(String userId, String newStatus) {
+    		    try {
+    		       
+    		        os.writeUTF("UPDATE");
+
+    		        os.writeUTF(userId);
+    		        os.writeUTF(newStatus); // Send the new status
+
+    		        
+    		        os.writeUTF("END");
+
+    		        
+    		        os.flush();
+    		    } catch (IOException e) {
+    		        e.printStackTrace();
+    		        // Handle the exception appropriately
+    		    }
+    		}
+
+    	    private ImageIcon getNewProfileImage() {
+    	        // Implement logic to get the new profile image (e.g., from file chooser)
+    	        // Return the ImageIcon representing the new profile image
+    	        return null;
+    	    }
+    	}
 }
 
 class sendThread extends Thread {
@@ -272,9 +513,9 @@ class CustomListCellRenderer extends DefaultListCellRenderer {
     @Override
     public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         JPanel panel = new JPanel();
-        panel.setLayout(new BorderLayout());
+        panel.setLayout(new GridLayout(1,2));
         panel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Color.BLACK),
+                BorderFactory.createLineBorder(Color.WHITE),
                 BorderFactory.createEmptyBorder(PADDING, PADDING, PADDING, PADDING)
         ));
 
@@ -293,14 +534,15 @@ class CustomListCellRenderer extends DefaultListCellRenderer {
 
                 // Set the resized ImageIcon to the JLabel
                 labelImg.setIcon(scaledIcon);
-                panel.add(labelImg, BorderLayout.WEST);
+                panel.add(labelImg);
             }
-            JLabel labelText = new JLabel(listItem.getText());
+            JLabel labelText = new JLabel(listItem.getText());        
             JLabel labelStatus = new JLabel(listItem.getStatus());
-            panel.add(labelText, BorderLayout.CENTER);
-            panel.add(labelStatus, BorderLayout.EAST);
+            panel.add(labelText);
+            panel.add(labelStatus);
         }
 
         return panel;
     }
+   
 }

@@ -11,7 +11,7 @@ public class ListItem {
     public ListItem(String text, ImageIcon profileImage, String status) {
         this.text = text;
         this.profileImage = (profileImage != null) ? profileImage : DEFAULT_PROFILE_IMAGE;
-        this.status = (status != null) ? status : "DEFAULT_STATUS";
+        this.status = (status != null) ? status : "hi";
     }
 
     public String getText() {

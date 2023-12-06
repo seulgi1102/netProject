@@ -10,6 +10,9 @@ import javax.swing.JList;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 import javax.swing.JTextField;
+
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.Font;
 import java.awt.GridLayout;
 
@@ -23,16 +26,25 @@ import javax.swing.LayoutStyle.ComponentPlacement;
 class showNewRoomPanel extends JFrame implements ActionListener {
 	JPanel newRoomPanel;
 	private JTextField textField;
+	JCheckBox checkBox;
 	private JScrollPane scroll;
-	private ArrayList<ListItem> itemList;
-	private ArrayList<String> selectedUserList;
+	private static ArrayList<ListItem> itemList;
+	private static ListItem item;
+	private ArrayList<ListItem> selectedUserList;
+	private ArrayList<String> userNameList;
 	private ChatServer chatServer;
 	private JButton createRoomBtn;
 	private JButton closeBtn;
-	showNewRoomPanel(ArrayList<ListItem> itemList,ChatServer server){
+	private JPanel panel_1;
+	private JLabel lblNewLabel_2;
+	private JLabel lblNewLabel_3;
+	protected static Integer roomNumber = 0;
+	showNewRoomPanel(ArrayList<ListItem> itemList,ListItem currentItem,ChatServer server){
 		this.itemList = itemList;
 		this.chatServer =server;
+		this.item =currentItem;
 		this.selectedUserList = new ArrayList<>();
+		this.userNameList = new ArrayList<>();
 		setBounds(0, 0, 302, 403);
 		newRoomPanel = new JPanel(); 
 		newRoomPanel.setBounds(0, 0, 313, 275);
@@ -48,7 +60,7 @@ class showNewRoomPanel extends JFrame implements ActionListener {
 		JLabel lblNewLabel = new JLabel("대화상대 선택");
 		lblNewLabel.setFont(new Font("맑은 고딕", Font.BOLD, 13));
 		lblNewLabel.setHorizontalAlignment(SwingConstants.LEFT);
-		lblNewLabel.setBounds(10, 70, 126, 19);
+		lblNewLabel.setBounds(10, 115, 126, 19);
 		newRoomPanel.add(lblNewLabel);
 		
 		
@@ -65,20 +77,34 @@ class showNewRoomPanel extends JFrame implements ActionListener {
 		
 		JPanel panel = new JPanel(new GridLayout(0, 1));
 		panel.setBounds(12, 99, 264, 224);
-
+		
+		
 		for (ListItem item : itemList) {
-		    JCheckBox checkBox = new JCheckBox(item.getText());
+			if(!item.getText().equals(currentItem.getText())) {
+		    checkBox = new JCheckBox(item.getText());
 		    panel.add(checkBox);
+		    }
 		}
-
 		scroll = new JScrollPane(panel);
-		scroll.setBounds(12, 99, 264, 224);
-
+		scroll.setBounds(12, 135, 264, 188);
 		newRoomPanel.add(scroll);
 		
 		closeBtn = new JButton("취소");
 		closeBtn.setBounds(209, 333, 67, 23);
 		newRoomPanel.add(closeBtn);
+		
+		panel_1 = new JPanel();
+		panel_1.setBounds(10, 76, 266, 29);
+		newRoomPanel.add(panel_1);
+		panel_1.setLayout(new GridLayout(1, 1, 0, 0));
+		
+		lblNewLabel_2 = new JLabel("방장:");
+		lblNewLabel_2.setHorizontalAlignment(SwingConstants.LEFT);
+		lblNewLabel_2.setFont(new Font("맑은 고딕", Font.BOLD, 13));
+		panel_1.add(lblNewLabel_2);
+		
+		lblNewLabel_3 = new JLabel(item.getText());
+		panel_1.add(lblNewLabel_3);
 		closeBtn.addActionListener(this);
 		/*for (ListItem item : itemList) {
             JCheckBox checkBox = new JCheckBox(item.getText());
@@ -108,10 +134,49 @@ class showNewRoomPanel extends JFrame implements ActionListener {
 			dispose();
 		}
 		if(e.getSource().equals(createRoomBtn)){
+			Component[] components = ((Container) scroll.getViewport().getView()).getComponents();
+	        
+			for (Component component : components) {
+	            if (component instanceof JCheckBox) {
+	                checkBox = (JCheckBox) component;
+					if(checkBox.isSelected()) {
+						userNameList.add(checkBox.getText());
+						
+						}
+						
+					}
+	            }
+	        for(String user : userNameList) {
+				ListItem item = findUserById(user);
+				selectedUserList.add(item);
+	        }
+	        selectedUserList.add(item);
+			for(ListItem user : selectedUserList) {
+				System.out.println(user.getText());
+			}
+			int number = generateRoomNumber();
+			System.out.println(textField.getText());
+			System.out.println("room:"+number);
+			
 			dispose();
+			
 		}
 		// TODO Auto-generated method stub
 		
 	}
+	 private static int generateRoomNumber() {
+		 	
+	        return roomNumber++;
+	    }
+	private static ListItem findUserById(String userId) {
+    	ListItem userItem = null;
+        for (ListItem item : itemList) {
+            if (item.getText().equals(userId)) {
+            	userItem = item;
+                break;
+            }
+        }
+        return userItem;
+    }
 
 }

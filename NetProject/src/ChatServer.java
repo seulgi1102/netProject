@@ -6,9 +6,10 @@ public class ChatServer {
 
     static ArrayList<ServerThread> list = new ArrayList<>();
     static ArrayList<ListItem> itemList = new ArrayList<>();
+    static ArrayList<Room> roomList = new ArrayList<>();
 
     public static void main(String[] args) throws IOException {
-        ServerSocket ssocket = new ServerSocket(5001);
+        ServerSocket ssocket = new ServerSocket(5002);
 
         while (true) {
             Socket s = ssocket.accept();
@@ -17,45 +18,94 @@ public class ChatServer {
 
             // 클라이언트로부터 받은 유저 정보를 읽음
            
-            String id = is.readUTF();
-            String userId = addUser(id);
+            String userInfo = is.readUTF();
+            ListItem userItem = addUser(userInfo);
+        
 
          
             // 연결된 클라이언트들에게 유저리스트를 전송
             sendUserList();
             
-            ServerThread thread = new ServerThread(s, userId, itemList, is, os);
+            ServerThread thread = new ServerThread(s, userItem.getText(), itemList, is, os);
             list.add(thread);
             thread.start();
         }
     }
-    // 리스트에 유저를 추가하고 유저의 아이디를 반환
-    public static String addUser(String id) {
-        String userId = null;
-        if (id.startsWith("ID:")) {
-            userId = id.substring(3);
-            itemList.add(new ListItem(userId, null, null));
+    //**
+    public static void updateUser(String userId, String newStatus) {
+        ListItem userToUpdate = findUserById(userId);
+        if (userToUpdate != null) {
+            userToUpdate.setStatus(newStatus);
+            sendUserList(); // Notify all connected clients about the update
         }
-        return userId;
+    }
+    // 리스트에 유저를 추가하고 유저의 아이디를 반환
+    public static ListItem addUser(String userInfo) {
+        String userId = null;
+        String userStatus = null;
+        ListItem listItem = null;
+
+        String[] parts = userInfo.split("/");
+        
+        for (String part : parts) {
+            if (part.startsWith("ID:")) {
+                userId = part.substring(3);
+            }
+            if (part.startsWith("STATUS:")) {
+            	userStatus = part.substring(7);
+            }
+        }
+            listItem = findUserById(userId);
+
+            if (listItem == null) {
+                // If the user is not in the list, add a new ListItem
+                listItem = new ListItem(userId, null, null);
+                itemList.add(listItem);
+            }else if(!listItem.getStatus().equals(null)){
+            	listItem.setStatus(listItem.getStatus());
+            }
+            else { listItem.setStatus(userStatus);}
+               
+                
+                System.out.println("User ID: " + listItem.getText());
+                System.out.println("Received Status: " + userStatus);
+                System.out.println("Updated Status: " + listItem.getStatus());
+                System.out.println("Updated itemList:");
+                for (ListItem item : itemList) {
+                    System.out.println("ID: " + item.getText() + ", Status: " + item.getStatus());
+                }
+
+        return listItem;
     }
 
-    // 연결된 클라이언트들에게 현재 사용자 목록을 모두 클라이언트에게 전송, 모두 전송하면 END
+    //아이디로 해당유저의 아이템을 찾는 메서드
+    public static ListItem findUserById(String userId) {
+        for (ListItem item : itemList) {
+            if (item.getText().equals(userId)) {
+                return item;
+            }
+        }
+        return null;
+    }
+    // 연결된 클라이언트들에게 현재 사용자 목록을 모두 클라이언트에게 전송, 모두 전송하면 END, to updateListener
     public static void sendUserList() {
         for (ServerThread t : list) {
             try {
                 t.os.writeUTF("UPDATE");
                 for (ListItem item : itemList) {
-                    t.os.writeUTF(item.getText());
+                	t.os.writeUTF("ID:" + item.getText() + "/"+"STATUS:" + item.getStatus());
+                    //t.os.writeUTF("STATUS:"+item.getStatus()); // 
+                    //t.os.writeUTF("END");
+                	t.os.flush();
                 }
-                // Signal the end of the user list
                 t.os.writeUTF("END");
+                t.os.flush(); // Ensure data is sent immediately
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
 }
-
 class ServerThread extends Thread {
     private String name;
     final DataInputStream is;
@@ -84,21 +134,38 @@ class ServerThread extends Thread {
         // 업데이트된 리스트를 다시 전송
         try {
             for (ListItem user : uList) {
-                os.writeUTF(user.getText());
+            	//로그인한 유저에게 현재 유저리스트의 유저들 정보 보내기. 처음로그인한 유저는 이 정보를 받아서 jlist를 표시
+                os.writeUTF("ID:"+user.getText()+"/"+"STATUS:"+user.getStatus());
+                //os.writeUTF(user.getStatus());
+                os.flush();
+                System.out.println(user.getText());
+                System.out.println(user.getStatus());
+                
             }
             // 리스트의 끝을 사용자에게 알림
             os.writeUTF("END");
+            os.flush();
         } catch (IOException e1) {
             e1.printStackTrace();
         }
 		String message;
 		while (true) {
 			try {
-	
+				//실시간으로 클라이언트에게서 메시지를 받음, 실시간 업데이트 원할때 키워드를 받으면 필요한 기능을 수행하도록 수정
 				message = is.readUTF();
 				System.out.println(message);
-
-
+				if (message.startsWith("UPDATE")) {
+					//여기서 sendUserUpdate 함수로부터 유저의 status를 실시간으로 받아서 item을 갱신. 수정하지마셍
+		            // Handle the update command
+		            String userId = is.readUTF(); // Read the user ID
+		            String newStatus = is.readUTF();
+		            System.out.println("userId: "+userId+" status: "+newStatus);
+		            ListItem userToUpdate = ChatServer.findUserById(userId);
+		            if (userToUpdate != null) {
+		                userToUpdate.setStatus(newStatus);
+		                }
+				}//edit버튼을 누르면 리스트를 가져오기
+				if (message.equals("REQUEST_USER_LIST")) {ChatServer.sendUserList();}
 				if (message.equals("logout")) {
 					this.active = false;
 					this.s.close();
