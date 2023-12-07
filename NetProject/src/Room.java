@@ -3,7 +3,7 @@ import javax.swing.*;
 
 public class Room {
     private Integer roomNumber = 0;
-    private String roomName = null;
+    private String roomName = "";
     private ArrayList<ListItem> roomItems;
    
     public Room(Integer roomNumber, String roomName, ArrayList<ListItem> roomItems) {

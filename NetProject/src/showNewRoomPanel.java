@@ -3,6 +3,8 @@ import javax.swing.JPanel;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 
 import javax.swing.JButton;
@@ -32,16 +34,16 @@ class showNewRoomPanel extends JFrame implements ActionListener {
 	private static ListItem item;
 	private ArrayList<ListItem> selectedUserList;
 	private ArrayList<String> userNameList;
-	private ChatServer chatServer;
+	private DataOutputStream os;
 	private JButton createRoomBtn;
 	private JButton closeBtn;
 	private JPanel panel_1;
 	private JLabel lblNewLabel_2;
 	private JLabel lblNewLabel_3;
 	protected static Integer roomNumber = 0;
-	showNewRoomPanel(ArrayList<ListItem> itemList,ListItem currentItem,ChatServer server){
+	showNewRoomPanel(ArrayList<ListItem> itemList,ListItem currentItem,DataOutputStream os){
 		this.itemList = itemList;
-		this.chatServer =server;
+		this.os =os;
 		this.item =currentItem;
 		this.selectedUserList = new ArrayList<>();
 		this.userNameList = new ArrayList<>();
@@ -151,13 +153,28 @@ class showNewRoomPanel extends JFrame implements ActionListener {
 				selectedUserList.add(item);
 	        }
 	        selectedUserList.add(item);
+	        String title = textField.getText();	
+	        //방의 제목, 선택한 유저의 이름을 서버 while문으로보냄
+	        try {
+				os.writeUTF("ROOM");
+		        for(ListItem item : selectedUserList) {
+		        	os.writeUTF(item.getText());	
+		        }
+		        os.writeUTF("/");
+		        os.writeUTF(title);
+				os.flush();
+			} catch (IOException e2) {
+				// TODO Auto-generated catch block
+				e2.printStackTrace();
+			}
+	        /*
 			for(ListItem user : selectedUserList) {
 				System.out.println(user.getText());
 			}
-			int number = generateRoomNumber();
-			System.out.println(textField.getText());
-			System.out.println("room:"+number);
 			
+			System.out.println(textField.getText());
+			//System.out.println("room:"+number);
+			*/
 			dispose();
 			
 		}

@@ -7,7 +7,7 @@ public class ChatServer {
     static ArrayList<ServerThread> list = new ArrayList<>();
     static ArrayList<ListItem> itemList = new ArrayList<>();
     static ArrayList<Room> roomList = new ArrayList<>();
-
+    private static Integer roomNumber = 0;
     public static void main(String[] args) throws IOException {
         ServerSocket ssocket = new ServerSocket(5002);
 
@@ -26,19 +26,15 @@ public class ChatServer {
             // 연결된 클라이언트들에게 유저리스트를 전송
             sendUserList();
             
-            ServerThread thread = new ServerThread(s, userItem.getText(), itemList, is, os);
+            ServerThread thread = new ServerThread(s, userItem.getText(),roomList, itemList, is, os);
             list.add(thread);
             thread.start();
         }
     }
-    //**
-    public static void updateUser(String userId, String newStatus) {
-        ListItem userToUpdate = findUserById(userId);
-        if (userToUpdate != null) {
-            userToUpdate.setStatus(newStatus);
-            sendUserList(); // Notify all connected clients about the update
-        }
+    public static Integer getNextRoomNumber() {
+        return roomNumber++;
     }
+    
     // 리스트에 유저를 추가하고 유저의 아이디를 반환
     public static ListItem addUser(String userInfo) {
         String userId = null;
@@ -113,13 +109,15 @@ class ServerThread extends Thread {
     Socket s;
     ArrayList<ListItem> uList;
 	private boolean active;
-
-    public ServerThread(Socket s, String name, ArrayList<ListItem> list, DataInputStream is, DataOutputStream os) {
+	private ArrayList<Room> rooms;
+	
+    public ServerThread(Socket s, String name, ArrayList<Room> rooms, ArrayList<ListItem> list,DataInputStream is, DataOutputStream os) {
         this.is = is;
         this.os = os;
         this.name = name;
         this.s = s;
         this.uList = list;
+        this.rooms = rooms;
     }
 
     @Override
@@ -165,7 +163,54 @@ class ServerThread extends Thread {
 		                userToUpdate.setStatus(newStatus);
 		                }
 				}//edit버튼을 누르면 리스트를 가져오기
-				if (message.equals("REQUEST_USER_LIST")) {ChatServer.sendUserList();}
+				if (message.equals("REQUEST_USER_LIST")) { ChatServer.sendUserList();}
+				//방만들기 시 신호와함께 유저리스트, 방제 보낸것을 받음
+				
+				if (message.startsWith("ROOM")) {
+					//String message2 = is.readUTF();
+					ArrayList<String> selectedUsers = new ArrayList<>();
+					 ArrayList<ListItem> selectedUserList = new ArrayList<>();
+					try {
+					    
+
+					    // Read "ROOM" and user names
+					    String data;
+					    while (!(data = is.readUTF()).equals("/")) {
+					    	//data = is.readUTF();
+					        selectedUsers.add(data);
+					    }
+
+					    // Read room subject
+					    String roomSubject = is.readUTF();
+
+					    // Process the received data
+					   
+					    for (String user : selectedUsers) {
+					        selectedUserList.add(ChatServer.findUserById(user));
+					    }
+
+					    // Create room and print information
+					    Room room = new Room(ChatServer.getNextRoomNumber(), roomSubject, selectedUserList);
+					    System.out.println("Room no:" + room.getRoomNumber() + " Room name:" + room.getRoomName());
+
+					    for (ListItem item : room.getRoomItems()) {
+					        System.out.println("Selected users:" + item.getText());
+					    }
+
+					    rooms.add(room);
+					    
+					    /*
+					    try {
+					        Thread.sleep(10000); // Delay (for demonstration purposes)
+					    } catch (InterruptedException e) {
+					        e.printStackTrace();
+					    }*/
+					} catch (IOException e) {
+					    e.printStackTrace();
+					    // Handle the exception appropriately (e.g., close resources, log, etc.)
+					}
+				}
+				
 				if (message.equals("logout")) {
 					this.active = false;
 					this.s.close();

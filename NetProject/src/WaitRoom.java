@@ -303,8 +303,8 @@ public class WaitRoom extends JPanel implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
     	ListItem item =findUserById(id);
-        showNewRoomPanel roomPanel = new showNewRoomPanel(listItem,item, server);
-            // Implement the logic for creating a new room or any other action
+        showNewRoomPanel roomPanel = new showNewRoomPanel(listItem,item, os);
+            
     }
     
     // 리스트를 계속 업데이트해주는 스레드
@@ -346,7 +346,7 @@ public class WaitRoom extends JPanel implements ActionListener {
         }
     }
 
-
+//내포클래스로 수정
 
     @SuppressWarnings("serial")
     class showMyProfilePanel extends JFrame implements ActionListener {
