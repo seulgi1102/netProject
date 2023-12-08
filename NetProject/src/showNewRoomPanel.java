@@ -175,12 +175,23 @@ class showNewRoomPanel extends JFrame implements ActionListener {
 			System.out.println(textField.getText());
 			//System.out.println("room:"+number);
 			*/
+	        sendRequestForRoomList();
 			dispose();
 			
 		}
 		// TODO Auto-generated method stub
 		
 	}
+	private void sendRequestForRoomList() {
+	    try {
+	        os.writeUTF("REQUEST_ROOM_LIST");
+	        os.flush();
+	    } catch (IOException e) {
+	        e.printStackTrace();
+	        // Handle the exception appropriately
+	    }
+	}
+
 	 private static int generateRoomNumber() {
 		 	
 	        return roomNumber++;

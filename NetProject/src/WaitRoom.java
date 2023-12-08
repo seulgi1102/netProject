@@ -29,13 +29,15 @@ public class WaitRoom extends JPanel implements ActionListener {
     protected String id;
     static String ip;
     static Integer port;
+    static ArrayList<Room> roomList = new ArrayList<>();
     protected static ArrayList<ListItem> listItem;
     static ArrayList<String> idList;
     static ArrayList<String> statusList;
     static ArrayList<Image> profilImageList;
+
     private JLabel Room;
     private JPanel currentPanel;
-    private showAllRoomPanel allroom;
+    private static showAllRoomPanel allroom;
     private ChatServer server;
 	public WaitRoom() {
 		currentPanel = panel;
@@ -45,6 +47,10 @@ public class WaitRoom extends JPanel implements ActionListener {
     }
     public void setChatServer(ChatServer server) {
         this.server = server;
+    }
+    public void WaitRoom() {
+    	//roomList = new ArrayList<>(); // Initialize the allRoom list
+        //allroom = new showAllRoomPanel(roomList);
     }
     public void start(String id, String ip, Integer port) throws IOException {
         this.id = id;
@@ -111,11 +117,48 @@ public class WaitRoom extends JPanel implements ActionListener {
                         }
                     }
                 }
-                //idList.add(user);
-            	//String status = is.readUTF();
                 listItem.add(new ListItem(id, null,state));
             }
             
+        }
+    }
+    private void receiveRoomInfo() throws IOException {
+    	roomList.clear();
+        while (true) {
+            String roomInfo = is.readUTF();
+            if (roomInfo.equals("END")) {
+                break;
+            }
+            
+            // Process the received room information
+            String[] parts = roomInfo.split("/");
+            String roomName = null;
+            Integer roomNumber = null;
+            // Extract room information as needed
+            for (String part : parts) {
+                if (part.startsWith("RNAME:")) {
+                    roomName = part.substring(6);
+                } else if (part.startsWith("RNUM:")) {
+                    roomNumber = Integer.parseInt(part.substring(5));
+                } 
+            }
+            roomList.add(new Room(roomNumber, roomName, null));
+            // Do something with the room information, e.g., update GUI
+            
+            // ... (update GUI or perform other actions as needed)
+        }
+        updateShowAllRoomPanel(roomList);
+        for(Room room : roomList) {
+            System.out.println("Received User Name:" + id);
+            System.out.println("Received Room Name: " + room.getRoomName());
+            System.out.println("Received Room Number: " + room.getRoomName());
+            }
+    }
+
+    // 방만들기 시 바로 초대받은 유저들의 showAllRoomPanel의 roomList가 업데이트 된다. 
+    private void updateShowAllRoomPanel(ArrayList<Room> updatedRoomList) {
+        if (allroom != null) {
+            allroom.updateRoomList(updatedRoomList);
         }
     }
 /*
@@ -283,15 +326,16 @@ public class WaitRoom extends JPanel implements ActionListener {
                  }
             }
             else if (arg0.getSource() == Room) {
-        		remove(panel);
-        		allroom = new showAllRoomPanel();
+            	remove(panel);
+        		allroom = new showAllRoomPanel(roomList); // 마우스클릭시 새로 패널을 만드는것은 안됨. 
+            	//allroom.setAllRoom(roomList);
                 add(allroom);
                 revalidate();
                 repaint();
             }
 
             else if (arg0.getSource() == Home) {
-            	// Handle the "H" click event
+            	//removeCurrentPanel();
             	remove(allroom);
             	add(panel);
             	revalidate();
@@ -307,7 +351,7 @@ public class WaitRoom extends JPanel implements ActionListener {
             
     }
     
-    // 리스트를 계속 업데이트해주는 스레드
+    // 리스트를 계속 업데이트해주는 스레드, sendUserUpdate에서 받음.
     class UpdateListener extends Thread {
         public void run() {
             try {
@@ -335,9 +379,15 @@ public class WaitRoom extends JPanel implements ActionListener {
                         }
                         
                         receiveUserList(id, status);
-                        
                         // 새 유저 리스트로 GUI를 업데이트
                         updateFriendList(listItem);
+                    }else if(updateCommand.equals("ROOM_UPDATE")) {
+                    	receiveRoomInfo();
+                    	for(Room room : roomList) {
+                    	System.out.println("Received rooms: " + room.getRoomName());
+                    	}
+                    	//showAllRoomPanel showAllRoomPanel = new showAllRoomPanel(roomList);
+						//showAllRoomPanel.updateRoomList(roomList);
                     }
                 }
             } catch (IOException e) {
@@ -428,7 +478,7 @@ public class WaitRoom extends JPanel implements ActionListener {
     				// TODO Auto-generated method stub
     			}
     			if(e.getSource()==editBtn) {
-    				updateUserSettings(os);
+    				updateUserSettings();
     				sendRequestForUserList();
     				currentStatus.setText(statusTextField.getText());
     				//ChatServer.updateUser(currentUser.getText(), statusTextField.getText());
@@ -446,7 +496,7 @@ public class WaitRoom extends JPanel implements ActionListener {
     		        // Handle the exception appropriately
     		    }
     		}
-			private void updateUserSettings(DataOutputStream os) {
+			private void updateUserSettings() {
     		    String userId = currentUser.getText();
     		    String newStatus = statusTextField.getText();
 

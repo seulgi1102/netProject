@@ -1,10 +1,13 @@
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 public class ChatServer {
 
     static ArrayList<ServerThread> list = new ArrayList<>();
+    private static ArrayList<ServerThread> threadList = new ArrayList<>();
     static ArrayList<ListItem> itemList = new ArrayList<>();
     static ArrayList<Room> roomList = new ArrayList<>();
     private static Integer roomNumber = 0;
@@ -20,14 +23,17 @@ public class ChatServer {
            
             String userInfo = is.readUTF();
             ListItem userItem = addUser(userInfo);
-        
-
-         
+            //현재 유저의 방 리스트를 얻어왔음.
+            ArrayList<Room> userRooms = getRoomById(userItem.getText());
+            
             // 연결된 클라이언트들에게 유저리스트를 전송
             sendUserList();
+            // 연결된 클라이언트들에게  현재 방 리스트를 전송.
             
             ServerThread thread = new ServerThread(s, userItem.getText(),roomList, itemList, is, os);
             list.add(thread);
+            
+            //sendRoomInfo(userRooms, thread);
             thread.start();
         }
     }
@@ -73,7 +79,27 @@ public class ChatServer {
 
         return listItem;
     }
-
+    //아이디로 룸 찾기
+    static ArrayList<Room> getRoomById(String userId) {
+    	Room userRoom = null;
+    	ArrayList<Room> userRooms = new ArrayList<>();
+        for (Room room : roomList) {
+        	
+        	ArrayList<ListItem> items = room.getRoomItems();
+        	for(ListItem item : items) {
+        		if (item.getText().equals(userId)) {
+        			
+                	userRoom = room;
+                    break;
+                }
+        	}
+        	//-------
+        	if(!userRooms.contains(userRoom)) {
+            userRooms.add(userRoom);
+            }
+        }
+        return userRooms;
+    }
     //아이디로 해당유저의 아이템을 찾는 메서드
     public static ListItem findUserById(String userId) {
         for (ListItem item : itemList) {
@@ -83,6 +109,8 @@ public class ChatServer {
         }
         return null;
     }
+    //선택받은 유저들에게만 sendRoomList하기위해 스레드리스트를 만들기
+
     // 연결된 클라이언트들에게 현재 사용자 목록을 모두 클라이언트에게 전송, 모두 전송하면 END, to updateListener
     public static void sendUserList() {
         for (ServerThread t : list) {
@@ -101,6 +129,27 @@ public class ChatServer {
             }
         }
     }
+    public static void sendRoomInfo(ArrayList<Room> userRooms, ServerThread thread) throws IOException {
+            try {
+            	//userRooms에 방이 없는경우
+            	thread.os.writeUTF("ROOM_UPDATE");
+            	for (Room room : userRooms) {
+            		if (room != null) {
+            		//thread.os.writeUTF("RNAME:" + room.getRoomName() + "/"+"RNUM:" + room.getRoomNumber() + "/"+"RITEMS"+room.getRoomItems());
+            		thread.os.writeUTF("RNAME:" + room.getRoomName() + "/"+"RNUM:" + room.getRoomNumber());
+            		thread.os.flush();
+            		System.out.println("RNAME:" + room.getRoomName() + "/"+"RNUM:" + room.getRoomNumber());
+            	
+            		}
+            	}
+            	thread.os.writeUTF("END");
+            	thread.os.flush();
+            	
+	            } catch (IOException e) {
+	            e.printStackTrace();
+            }
+        
+    }
 }
 class ServerThread extends Thread {
     private String name;
@@ -110,7 +159,7 @@ class ServerThread extends Thread {
     ArrayList<ListItem> uList;
 	private boolean active;
 	private ArrayList<Room> rooms;
-	
+	private ArrayList<Room> currentUserRooms = new ArrayList<>();
     public ServerThread(Socket s, String name, ArrayList<Room> rooms, ArrayList<ListItem> list,DataInputStream is, DataOutputStream os) {
         this.is = is;
         this.os = os;
@@ -119,7 +168,9 @@ class ServerThread extends Thread {
         this.uList = list;
         this.rooms = rooms;
     }
-
+    public String getThreadName() {
+    	return name;
+    }
     @Override
     public void run() {
     	try {
@@ -164,12 +215,25 @@ class ServerThread extends Thread {
 		                }
 				}//edit버튼을 누르면 리스트를 가져오기
 				if (message.equals("REQUEST_USER_LIST")) { ChatServer.sendUserList();}
+				
+				if (message.equals("REQUEST_ROOM_LIST")) {
+				    // Get the room list of each user in the current room
+				            ArrayList<ServerThread> Threads = findUserThreadByRoom(currentUserRooms);
+				            for (ServerThread thread : Threads) {
+				                // Get the updated room list for the user
+				                ArrayList<Room> updatedUserRooms = ChatServer.getRoomById(thread.getThreadName());
+				                // Send the updated room list to the user
+				                ChatServer.sendRoomInfo(updatedUserRooms, thread);
+				            } 
+				    }
+				
 				//방만들기 시 신호와함께 유저리스트, 방제 보낸것을 받음
 				
 				if (message.startsWith("ROOM")) {
 					//String message2 = is.readUTF();
 					ArrayList<String> selectedUsers = new ArrayList<>();
 					 ArrayList<ListItem> selectedUserList = new ArrayList<>();
+					 
 					try {
 					    
 
@@ -196,9 +260,13 @@ class ServerThread extends Thread {
 					    for (ListItem item : room.getRoomItems()) {
 					        System.out.println("Selected users:" + item.getText());
 					    }
+					    //만들어진 방을 서버의 방리스트에 추가 
+					    ChatServer.roomList.add(room);
+					    //현재유저의 초대받은 방들 찾기
+					    currentUserRooms = ChatServer.getRoomById(name);
+					    //현재 유저에게 초대받은 방을 보내기
+					    ChatServer.sendRoomInfo(currentUserRooms, this);
 
-					    rooms.add(room);
-					    
 					    /*
 					    try {
 					        Thread.sleep(10000); // Delay (for demonstration purposes)
@@ -235,5 +303,21 @@ class ServerThread extends Thread {
 			e.printStackTrace();
 		}
 	}
+	public static ArrayList<ServerThread> findUserThreadByRoom(ArrayList<Room> currentRooms) {
+		 ArrayList<ServerThread> selectedThreads = new ArrayList<>();
+    for (ServerThread thread : ChatServer.list) {
+    	for (Room room : currentRooms) {
+        	ArrayList<ListItem> items = room.getRoomItems();
+        	for(ListItem item : items) {
+		        if (thread.getThreadName().equals(item.getText())) {
+		        	if (!selectedThreads.contains(thread)) {
+                        selectedThreads.add(thread);
+                    }
+		        }
+	        }
+	    }
+    }
+    return selectedThreads;
+}
 
 }
