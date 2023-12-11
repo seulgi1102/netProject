@@ -3,13 +3,17 @@ import javax.swing.JFrame;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.JTextField;
 import java.awt.Font;
 import java.awt.Image;
@@ -24,7 +28,8 @@ class showMyProfilePanel extends JFrame implements ActionListener {
 		protected JButton editBtn;
 		protected JButton closeBtn;
 		protected ListItem currentUser;
-		protected DataOutputStream os;
+		protected DataOutputStream os; 
+		private JLabel lblNewLabel_2;
 		showMyProfilePanel(ListItem currentUser, DataOutputStream os){
 			this.os = os;
 			this.currentUser = currentUser;
@@ -64,14 +69,20 @@ class showMyProfilePanel extends JFrame implements ActionListener {
 			statusTextField.setBounds(133, 219, 194, 120);
 			myProfilePanel.add(statusTextField);
 			
-			JLabel lblNewLabel_2 = new JLabel();
-			ImageIcon profileImageIcon = this.currentUser.getProfileImage();
-	        Image scaledProfileImage = scaleImage(profileImageIcon.getImage(), 142, 131);
-	        ImageIcon scaledProfileImageIcon = new ImageIcon(scaledProfileImage);
-	        lblNewLabel_2.setIcon(scaledProfileImageIcon);
-			lblNewLabel_2.setHorizontalAlignment(SwingConstants.CENTER);
-			lblNewLabel_2.setBounds(133, 40, 142, 131);
-			myProfilePanel.add(lblNewLabel_2);
+			 lblNewLabel_2 = new JLabel();
+		     ImageIcon profileImageIcon = this.currentUser.getProfileImage();
+		     Image scaledProfileImage = scaleImage(profileImageIcon.getImage(), 142, 131);
+		     ImageIcon scaledProfileImageIcon = new ImageIcon(scaledProfileImage);
+		     lblNewLabel_2.setIcon(scaledProfileImageIcon);
+		     lblNewLabel_2.setHorizontalAlignment(SwingConstants.CENTER);
+		     lblNewLabel_2.setBounds(133, 40, 142, 131);
+		     lblNewLabel_2.addMouseListener(new MouseAdapter() {
+		            @Override
+		            public void mouseClicked(MouseEvent e) {
+		                openFileChooser();
+		            }
+		        });
+		     myProfilePanel.add(lblNewLabel_2);
 			
 			JLabel lblNewLabel_1_1 = new JLabel("나의 프로필");
 			lblNewLabel_1_1.setHorizontalAlignment(SwingConstants.LEFT);
@@ -84,6 +95,26 @@ class showMyProfilePanel extends JFrame implements ActionListener {
 			
 			
 		}
+		private void openFileChooser() {
+	        JFileChooser fileChooser = new JFileChooser();
+	        int result = fileChooser.showOpenDialog(this);
+
+	        if (result == JFileChooser.APPROVE_OPTION) {
+	            // Get the selected file
+	            java.io.File selectedFile = fileChooser.getSelectedFile();
+
+	            // Update the profile image
+	            ImageIcon newProfileImageIcon = new ImageIcon(selectedFile.getPath());
+	            Image scaledProfileImage = scaleImage(newProfileImageIcon.getImage(), 142, 131);
+	            ImageIcon scaledProfileImageIcon = new ImageIcon(scaledProfileImage);
+	            lblNewLabel_2.setIcon(scaledProfileImageIcon);
+
+	            // You may want to save the new profile image or handle it as needed
+	            // For example, you can call getNewProfileImage() to get the updated ImageIcon
+	            ImageIcon updatedProfileImage = getNewProfileImage();
+	            // Further logic...
+	        }
+	    }
 		private Image scaleImage(Image image, int width, int height) {
 	        return image.getScaledInstance(width, height, Image.SCALE_SMOOTH);
 	    }
@@ -132,4 +163,5 @@ class showMyProfilePanel extends JFrame implements ActionListener {
 	        // Return the ImageIcon representing the new profile image
 	        return null;
 	    }
+	   
 	}

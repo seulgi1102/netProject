@@ -27,7 +27,7 @@ public class ChatClient implements ActionListener{
 	int i = 0;
 	public ChatClient() throws IOException {
 		frame = new JFrame();
-		frame.setBounds(0,0,400,600);
+		frame.setBounds(0,0,390,600);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
 		container = frame.getContentPane();

@@ -290,12 +290,15 @@ class ServerThread extends Thread {
                 }
 
                 if (message.equals("REQUEST_ROOM_LIST")) {
+                	if(!(currentUserRooms == null)) {
                    ArrayList<ServerThread> threads = findUserThreadByCurrentRooms(currentUserRooms);
+                   
                    for (ServerThread thread : threads) {
                         ArrayList<Room> updatedUserRooms = ChatServer.getRoomById(thread.getThreadName());
                         ChatServer.sendRoomInfo(updatedUserRooms, thread);
                 	
                     }
+                   }
                 
                 }
 

@@ -1,3 +1,4 @@
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
@@ -9,6 +10,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -26,6 +29,7 @@ public class WaitRoom extends JPanel implements ActionListener {
     protected JLabel Home;
     protected JLabel image;
     protected JLabel currentStatus;
+    protected JLabel CreateRoom;
     DataInputStream is;
     DataOutputStream os;
     protected static String id;
@@ -183,21 +187,17 @@ public class WaitRoom extends JPanel implements ActionListener {
         setLayout(null);
 
         panel = new JPanel();
-        panel.setBackground(new Color(253, 237, 172));
+        panel.setBackground(new Color(227, 227, 234));
         panel.setBounds(57, 0, 343, 600);
         add(panel);                       
         panel.setLayout(null);
 
-        JLabel frnd = new JLabel("친구");
-        frnd.setBounds(12, 5, 64, 31);
-        frnd.setFont(new Font("굴림", Font.BOLD, 20));
+        //JLabel frnd = new JLabel("<html><font color='#edbd05'>H</font>olly <font color='#edbd05'>T</font>alk.</html>");
+        JLabel frnd = new JLabel("Holly Talk.");
+        frnd.setForeground(new Color(160, 97, 163));//진한보라
+        frnd.setBounds(12, 6, 162, 41);
+        frnd.setFont(new Font("Yu Gothic UI Semibold", Font.BOLD , 30));
         panel.add(frnd);
-
-        textField = new JTextField();
-        textField.setBounds(12, 31, 290, 31);
-        panel.add(textField);
-        textField.setText("이름 검색");
-        textField.setColumns(10);
 
         frndList = new JList<>();
         frndList.setCellRenderer(new CustomListCellRenderer());
@@ -211,11 +211,17 @@ public class WaitRoom extends JPanel implements ActionListener {
         scrollPane.setBorder(new LineBorder(Color.WHITE));
         panel.add(scrollPane);
         
-        newRoom = new JButton("+");
-        newRoom.setFont(new Font("굴림", Font.BOLD, 25));
-        newRoom.setBounds(276, 8, 26, 23);
-        newRoom.setBorder(new LineBorder(new Color(0, 0, 0)));
-        panel.add(newRoom);
+        ImageIcon CreateRoomIcon = new ImageIcon("C:\\이미지\\문 이미지1\\pngwing.com.png");
+        int CRWidth = 40; 
+        int CRHeight = 40; 
+        Image scaledImage3 = CreateRoomIcon.getImage().getScaledInstance(CRWidth, CRHeight, Image.SCALE_SMOOTH);
+        ImageIcon scaledIcon3 = new ImageIcon(scaledImage3);
+        CreateRoom = new JLabel();
+        CreateRoom.setBounds(265, 12, 52, 41);
+        CreateRoom.setIcon(scaledIcon3);
+        panel.add(CreateRoom);
+        
+        
         
         JPanel userInfo = new JPanel();
         userInfo.setBounds(12, 72, 290, 80);
@@ -232,8 +238,8 @@ public class WaitRoom extends JPanel implements ActionListener {
         image = new JLabel();
         ImageIcon originalIcon = item.getProfileImage();
         // Resize the ImageIcon to the desired width and height
-        int newWidth = 50; // Set the desired width
-        int newHeight = 50; // Set the desired height
+        int newWidth = 40; // Set the desired width
+        int newHeight = 40; // Set the desired height
         Image scaledImage = originalIcon.getImage().getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
         ImageIcon scaledIcon = new ImageIcon(scaledImage);
         
@@ -249,7 +255,7 @@ public class WaitRoom extends JPanel implements ActionListener {
         panel.add(userInfo);
         
         panelChoice = new JPanel();
-        panelChoice.setBackground(new Color(247, 196, 145));
+        panelChoice.setBackground(new Color(197, 95, 146));
         panelChoice.setBounds(0, 0, 58, 600);
         add(panelChoice);
         panelChoice.setLayout(null);
@@ -279,7 +285,8 @@ public class WaitRoom extends JPanel implements ActionListener {
 
         setVisible(true);
 
-        newRoom.addActionListener(this);
+        //newRoom.addActionListener(this);
+        CreateRoom.addMouseListener(new MyMouseListener());
         loggedInUser.addMouseListener(new MyMouseListener());
         Room.addMouseListener(new MyMouseListener());
         Home.addMouseListener(new MyMouseListener());
@@ -301,6 +308,10 @@ public class WaitRoom extends JPanel implements ActionListener {
                      showMyProfilePanel profilePanel = new showMyProfilePanel(loggedInUserItem);
                      profilePanel.setVisible(true);
                  }
+            }
+            else if(arg0.getSource() == CreateRoom) {
+            	ListItem item =findUserById(id);
+                showNewRoomPanel roomPanel = new showNewRoomPanel(listItem,item, os);
             }
             else if (arg0.getSource() == Room) {
             	
@@ -524,15 +535,23 @@ public class WaitRoom extends JPanel implements ActionListener {
         }
 
         private void gui(ArrayList<Room> list) {
-            setLayout(new BorderLayout());
+            setLayout(null);
             setBounds(57, 0, 343, 600);
-            panel = new JPanel();
-            panel.setBackground(new Color(253, 237, 172));
-            panel.setLayout(new BorderLayout());
 
-            JLabel label = new JLabel("My Room");
-            label.setFont(new Font("굴림", Font.BOLD, 20));
-            panel.add(label, BorderLayout.NORTH);
+            panel = new JPanel();
+            panel.setBackground(new Color(227, 227, 234));
+            panel.setBounds(0, 0, 343, 600);
+            add(panel);
+            panel.setLayout(null);
+
+            //JLabel label = new JLabel("<html><font color='#edbd05'> R</font>oom </html>");
+            JLabel label = new JLabel(" Room.");
+            label.setForeground(new Color(160, 97, 163));
+            //label.setForeground(new Color(197, 95, 146)); //보라색
+            //label.setForeground(new Color(237, 185, 5));//노란색
+            label.setFont(new Font("Yu Gothic UI Semibold", Font.BOLD, 30));
+            label.setBounds(10, 10, 200, 30); // Adjust the bounds as needed
+            panel.add(label);
 
             roomList = new JList<>();
             roomList.setCellRenderer(new CustomListCellRenderer2());
@@ -541,9 +560,9 @@ public class WaitRoom extends JPanel implements ActionListener {
             roomList.addListSelectionListener(this);
 
             scrollPane = new JScrollPane(roomList);
-            panel.add(scrollPane, BorderLayout.CENTER);
-
-            add(panel, BorderLayout.CENTER);
+            scrollPane.setBorder(new LineBorder(Color.WHITE));
+            scrollPane.setBounds(10, 50, 300, 500); // Adjust the bounds as needed
+            panel.add(scrollPane);
         }
         public void valueChanged(ListSelectionEvent e) {
         	if(!e.getValueIsAdjusting()) {
@@ -608,7 +627,7 @@ public class WaitRoom extends JPanel implements ActionListener {
     		protected JButton editBtn;
     		protected JButton closeBtn;
     		protected ListItem currentUser;
-    		
+    		protected JLabel lblNewLabel_2;
     		showMyProfilePanel(ListItem currentUser){
     			
     			this.currentUser = currentUser;
@@ -647,14 +666,35 @@ public class WaitRoom extends JPanel implements ActionListener {
     			statusTextField.setBounds(133, 219, 194, 120);
     			myProfilePanel.add(statusTextField);
     			
-    			JLabel lblNewLabel_2 = new JLabel();
+    			lblNewLabel_2 = new JLabel();
     			ImageIcon profileImageIcon = this.currentUser.getProfileImage();
     	        Image scaledProfileImage = scaleImage(profileImageIcon.getImage(), 142, 131);
     	        ImageIcon scaledProfileImageIcon = new ImageIcon(scaledProfileImage);
     	        lblNewLabel_2.setIcon(scaledProfileImageIcon);
     			lblNewLabel_2.setHorizontalAlignment(SwingConstants.CENTER);
     			lblNewLabel_2.setBounds(133, 40, 142, 131);
-    			myProfilePanel.add(lblNewLabel_2);
+    			lblNewLabel_2.addMouseListener(new MouseAdapter() {
+    	            @Override
+    	            public void mouseClicked(MouseEvent e) {
+    	                SwingUtilities.invokeLater(() -> {
+    	                    // Open a file chooser
+    	                    System.out.println("Mouse Clicked");
+    	                    JFileChooser fileChooser = new JFileChooser();
+    	                    int result = fileChooser.showOpenDialog(showMyProfilePanel.this);
+
+    	                    // If a file is selected, update the label with the new image
+    	                    if (result == JFileChooser.APPROVE_OPTION) {
+    	                        ImageIcon newProfileImageIcon = new ImageIcon(fileChooser.getSelectedFile().getAbsolutePath());
+    	                        Image newScaledProfileImage = newProfileImageIcon.getImage().getScaledInstance(142, 131, Image.SCALE_SMOOTH);
+    	                        ImageIcon newScaledProfileImageIcon = new ImageIcon(newScaledProfileImage);
+    	                        lblNewLabel_2.setIcon(newScaledProfileImageIcon);
+    	                    }
+    	                });
+    	            }
+    	        });
+
+    	        myProfilePanel.add(lblNewLabel_2);
+
     			
     			JLabel lblNewLabel_1_1 = new JLabel("나의 프로필");
     			lblNewLabel_1_1.setHorizontalAlignment(SwingConstants.LEFT);
@@ -681,6 +721,7 @@ public class WaitRoom extends JPanel implements ActionListener {
     				updateUserSettings();
     				sendRequestForUserList();
     				currentStatus.setText(statusTextField.getText());
+    				image.setIcon(lblNewLabel_2.getIcon());
     				dispose();
     			}
     		}
@@ -697,20 +738,21 @@ public class WaitRoom extends JPanel implements ActionListener {
 			private void updateUserSettings() {
     		    String userId = currentUser.getText();
     		    String newStatus = statusTextField.getText();
+    		    ImageIcon profileImageIcon = (ImageIcon) lblNewLabel_2.getIcon();
 
     		    // Send the updated information to the server
-    		    sendUserUpdate(userId, newStatus);
+    		    sendUserUpdate(userId, newStatus, profileImageIcon);
     		    dispose();
     		}
     		//서버스레드의 while문으로 전달됨.
-    		private void sendUserUpdate(String userId, String newStatus) {
+    		private void sendUserUpdate(String userId, String newStatus,ImageIcon profileImageIcon) {
     		    try {
     		       
     		        os.writeUTF("UPDATE");
 
     		        os.writeUTF(userId);
     		        os.writeUTF(newStatus); // Send the new status
-
+    		        sendImageData(profileImageIcon, os);
     		        
     		        os.writeUTF("END");
 
@@ -721,7 +763,28 @@ public class WaitRoom extends JPanel implements ActionListener {
     		        // Handle the exception appropriately
     		    }
     		}
+    		private void sendImageData(ImageIcon profileImageIcon, DataOutputStream os) throws IOException {
+    		    // Convert the ImageIcon to byte array
+    		    BufferedImage bufferedImage = new BufferedImage(
+    		            profileImageIcon.getIconWidth(),
+    		            profileImageIcon.getIconHeight(),
+    		            BufferedImage.TYPE_INT_RGB
+    		    );
+    		    Graphics g = bufferedImage.createGraphics();
+    		    // Paint the ImageIcon to the BufferedImage
+    		    profileImageIcon.paintIcon(null, g, 0, 0);
+    		    g.dispose();
 
+    		    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    		    ImageIO.write(bufferedImage, "png", baos);
+
+    		    // Convert the ByteArrayOutputStream to byte array
+    		    byte[] imageBytes = baos.toByteArray();
+
+    		    // Send the image size and then the image data
+    		    os.writeInt(imageBytes.length);
+    		    os.write(imageBytes);
+    		}
     	    private ImageIcon getNewProfileImage() {
     	        // Implement logic to get the new profile image (e.g., from file chooser)
     	        // Return the ImageIcon representing the new profile image

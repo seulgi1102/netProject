@@ -24,21 +24,15 @@ public class WaitRoom1 extends JPanel {
 	        setLayout(null);
 
 	        JPanel panel = new JPanel();
-	        panel.setBackground(new Color(253, 237, 172));
+	        panel.setBackground(new Color(227, 227, 234));
 	        panel.setBounds(57, 0, 343, 600);
 	        add(panel);
 	        panel.setLayout(null);
 
-	        JLabel frnd = new JLabel("친구");
-	        frnd.setBounds(12, 5, 64, 31);
-	        frnd.setFont(new Font("굴림", Font.BOLD, 20));
+	        JLabel frnd = new JLabel("Holly Talk");
+	        frnd.setBounds(12, 6, 162, 41);
+	        frnd.setFont(new Font("굴림", Font.BOLD | Font.ITALIC, 30));
 	        panel.add(frnd);
-
-	        JTextField textField = new JTextField();
-	        textField.setBounds(12, 31, 290, 31);
-	        panel.add(textField);
-	        textField.setText("이름 검색");
-	        textField.setColumns(10);
 
 	        JList frndList = new JList<>();
 	        frndList.setBounds(12, 173, 290, 386);
@@ -65,9 +59,13 @@ public class WaitRoom1 extends JPanel {
 	        
 	        JLabel lblNewLabel_2 = new JLabel("New label");
 	        panel_1.add(lblNewLabel_2,BorderLayout.EAST);
+	        
+	        JLabel lblNewLabel_3 = new JLabel("New label");
+	        lblNewLabel_3.setBounds(250, 12, 52, 41);
+	        panel.add(lblNewLabel_3);
 
 	        JPanel panelChoice = new JPanel();
-	        panelChoice.setBackground(new Color(247, 196, 145));
+	        panelChoice.setBackground(new Color(197, 95, 146));
 	        panelChoice.setBounds(0, 0, 58, 600);
 	        add(panelChoice);
 	        panelChoice.setLayout(null);

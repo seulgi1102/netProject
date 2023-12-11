@@ -55,7 +55,7 @@ public class showAllRoomPanel extends JPanel implements ListSelectionListener {
 
     private void gui(ArrayList<Room> list) {
         setLayout(new BorderLayout());
-        setBounds(57, 0, 343, 600);
+        setBounds(57, 0, 300, 500);
         panel = new JPanel();
         panel.setBackground(new Color(253, 237, 172));
         panel.setLayout(new BorderLayout());
