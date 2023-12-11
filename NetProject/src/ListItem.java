@@ -5,13 +5,13 @@ public class ListItem {
     private ImageIcon profileImage;
     private int roomNumber;
     private String status;
-    private static String imagePath = "C:\\Users\\USER\\git\\netProject\\NetProject\\src\\img\\defaultProfile.jpeg";
+    private static String imagePath = "C:\\net-project\\netProject\\NetProject\\src\\img\\defaultProfile.jpeg";
     private static final ImageIcon DEFAULT_PROFILE_IMAGE = new ImageIcon(imagePath);
     
     public ListItem(String text, ImageIcon profileImage, String status) {
         this.text = text;
         this.profileImage = (profileImage != null) ? profileImage : DEFAULT_PROFILE_IMAGE;
-        this.status = (status != null) ? status : "hi";
+        this.status = (status != null) ? status : "";
     }
 
     public String getText() {

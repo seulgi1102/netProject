@@ -11,8 +11,9 @@ public class ChatServer {
     static ArrayList<ListItem> itemList = new ArrayList<>();
     static ArrayList<Room> roomList = new ArrayList<>();
     private static Integer roomNumber = 0;
+    
     public static void main(String[] args) throws IOException {
-        ServerSocket ssocket = new ServerSocket(5002);
+        ServerSocket ssocket = new ServerSocket(5001);
 
         while (true) {
             Socket s = ssocket.accept();
@@ -109,28 +110,46 @@ public class ChatServer {
         }
         return null;
     }
-    //선택받은 유저들에게만 sendRoomList하기위해 스레드리스트를 만들기
+    public static void sendMessage(ServerThread t, String userName, String message) {
+        try {
+            if (t.s != null && !t.s.isClosed()&& !t.getThreadName().equals(userName)) {
+                t.os.writeUTF("MESSAGE" +userName+"/"+message);
+                t.os.flush();
+                System.out.println("SENT: " + userName + " To: " + t.getThreadName() + " : " + message);
+            } else {
+                // Handle the case where the socket is closed (e.g., client disconnected)
+                // You might want to remove the ServerThread from the list in this case
+            }
+        } catch (IOException e) {
+            // Handle the exception (e.g., log or print the error)
+            e.printStackTrace();
+        }
+    }
 
     // 연결된 클라이언트들에게 현재 사용자 목록을 모두 클라이언트에게 전송, 모두 전송하면 END, to updateListener
     public static void sendUserList() {
         for (ServerThread t : list) {
             try {
+            	if (t.s != null && !t.s.isClosed()) {
                 t.os.writeUTF("UPDATE");
                 for (ListItem item : itemList) {
                 	t.os.writeUTF("ID:" + item.getText() + "/"+"STATUS:" + item.getStatus());
                     //t.os.writeUTF("STATUS:"+item.getStatus()); // 
                     //t.os.writeUTF("END");
-                	t.os.flush();
+                	//t.os.flush();
                 }
                 t.os.writeUTF("END");
                 t.os.flush(); // Ensure data is sent immediately
+                }
             } catch (IOException e) {
                 e.printStackTrace();
+                list.remove(t);
             }
         }
     }
     public static void sendRoomInfo(ArrayList<Room> userRooms, ServerThread thread) throws IOException {
             try {
+            	 if (thread.s != null && !thread.s.isClosed()) {
             	//userRooms에 방이 없는경우
             	thread.os.writeUTF("ROOM_UPDATE");
             	for (Room room : userRooms) {
@@ -145,11 +164,34 @@ public class ChatServer {
             	thread.os.writeUTF("END");
             	thread.os.flush();
             	
-	            } catch (IOException e) {
+	            } else {
+	                System.out.println("Socket is closed. Unable to send room info.");
+	            	}
+            	 } catch (IOException e) {
 	            e.printStackTrace();
             }
         
     }
+	public static Room getRoomByRoomNumber(int roomNumber) {
+		Room userRoom = null;
+		ArrayList<Room> userRooms = new ArrayList<>();
+		for (Room room : roomList) {
+			if(room.getRoomNumber().equals(roomNumber)) {
+				userRoom = room;
+				break;
+			}
+		}
+		return userRoom;
+	}
+	public static ServerThread findUserThreadById(String userId) {
+    for (ServerThread thread : list) {
+        if (thread.getThreadName().equals(userId)) {
+            return thread;
+        }
+    }
+    return null;
+}
+	
 }
 class ServerThread extends Thread {
     private String name;
@@ -157,167 +199,205 @@ class ServerThread extends Thread {
     final DataOutputStream os;
     Socket s;
     ArrayList<ListItem> uList;
-	private boolean active;
-	private ArrayList<Room> rooms;
-	private ArrayList<Room> currentUserRooms = new ArrayList<>();
-    public ServerThread(Socket s, String name, ArrayList<Room> rooms, ArrayList<ListItem> list,DataInputStream is, DataOutputStream os) {
+    private boolean active;
+    private static ArrayList<Room> rooms;
+
+    private ArrayList<Room> currentUserRooms = new ArrayList<>();
+
+    public ServerThread(Socket s, String name, ArrayList<Room> rooms, ArrayList<ListItem> list, DataInputStream is, DataOutputStream os) {
         this.is = is;
         this.os = os;
         this.name = name;
         this.s = s;
         this.uList = list;
         this.rooms = rooms;
+        this.active = true;
+        this.currentUserRooms = getRoomById(name);
+    }
+    static ArrayList<Room> getRoomById(String userId) {
+    	Room userRoom = null;
+    	ArrayList<Room> userRooms = new ArrayList<>();
+        for (Room room : rooms) {
+        	
+        	ArrayList<ListItem> items = room.getRoomItems();
+        	for(ListItem item : items) {
+        		if (item.getText().equals(userId)) {
+        			
+                	userRoom = room;
+                    break;
+                }
+        	}
+        	//-------
+        	if(!userRooms.contains(userRoom)) {
+            userRooms.add(userRoom);
+            }
+        }
+        return userRooms;
     }
     public String getThreadName() {
-    	return name;
+        return name;
     }
+
     @Override
     public void run() {
-    	try {
-        //모든 연결된 사용자에게 리스트가 업데이트될 필요가 있음을 알림, 새로운 유저가 로그인한경우
+        try {
             os.writeUTF("UPDATE");
+            for (ListItem user : uList) {
+                os.writeUTF("ID:" + user.getText() + "/" + "STATUS:" + user.getStatus());
+                os.flush();
+            }
+            os.writeUTF("END");
+            os.flush();
+        } catch (IOException e) {
+            handleSocketException(e);
+        }
+
+        String message;
+        while (active) {
+            try {
+                message = is.readUTF();
+                System.out.println(message);
+
+                //String message = is.readUTF();
+                if(message.startsWith("MESSAGE")) {
+					//String allInfo = is.readUTF();
+					String allInfo = message.substring(7);
+					String[] allInfoParts = allInfo.split("/");
+					
+					int roomNumber = Integer.parseInt(allInfoParts[0]);
+					String userName = allInfoParts[1];
+					String messages = allInfoParts[2];
+					System.out.println("Server: while() / roomNumber: "+roomNumber+" userNmae: "+userName+" message: "+messages);
+					Room room = ChatServer.getRoomByRoomNumber(roomNumber);
+					ArrayList<ServerThread> Threads = findUserThreadByRoom(room);
+					for(ServerThread t : Threads) {
+						ChatServer.sendMessage(t,userName,messages);
+					}
+
+				}
+                if (message.startsWith("UPDATE")) {
+                    String userId = is.readUTF();
+                    String newStatus = is.readUTF();
+                    System.out.println("userId: " + userId + " status: " + newStatus);
+                    ListItem userToUpdate = ChatServer.findUserById(userId);
+                    if (userToUpdate != null) {
+                        userToUpdate.setStatus(newStatus);
+                    }
+                }
+
+                if (message.equals("REQUEST_USER_LIST")) {
+                    ChatServer.sendUserList();
+                }
+
+                if (message.equals("REQUEST_ROOM_LIST")) {
+                   ArrayList<ServerThread> threads = findUserThreadByCurrentRooms(currentUserRooms);
+                   for (ServerThread thread : threads) {
+                        ArrayList<Room> updatedUserRooms = ChatServer.getRoomById(thread.getThreadName());
+                        ChatServer.sendRoomInfo(updatedUserRooms, thread);
+                	
+                    }
+                
+                }
+
+                if (message.startsWith("ROOM")) {
+                    ArrayList<String> selectedUsers = new ArrayList<>();
+                    ArrayList<ListItem> selectedUserList = new ArrayList<>();
+                    try {
+                        String data;
+                        while (!(data = is.readUTF()).equals("/")) {
+                            selectedUsers.add(data);
+                        }
+
+                        String roomSubject = is.readUTF();
+
+                        for (String user : selectedUsers) {
+                            selectedUserList.add(ChatServer.findUserById(user));
+                        }
+
+                        Room room = new Room(ChatServer.getNextRoomNumber(), roomSubject, selectedUserList);
+                        System.out.println("Room no:" + room.getRoomNumber() + " Room name:" + room.getRoomName());
+
+                        for (ListItem item : room.getRoomItems()) {
+                            System.out.println("Selected users:" + item.getText());
+                        }
+
+                        ChatServer.roomList.add(room);
+                        currentUserRooms = ChatServer.getRoomById(name);
+                        ChatServer.sendRoomInfo(currentUserRooms, this);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                if (message.equals("logout")) {
+                    this.active = false;
+                    this.s.close();
+                    break;
+                }
+
+               
+            } catch (SocketException e) {
+                handleSocketException(e);
+            } catch (IOException e) {
+                handleSocketException(e);
+            }
+        }
+
+        try {
+            this.is.close();
+            this.os.close();
+            this.s.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        // 업데이트된 리스트를 다시 전송
-        try {
-            for (ListItem user : uList) {
-            	//로그인한 유저에게 현재 유저리스트의 유저들 정보 보내기. 처음로그인한 유저는 이 정보를 받아서 jlist를 표시
-                os.writeUTF("ID:"+user.getText()+"/"+"STATUS:"+user.getStatus());
-                //os.writeUTF(user.getStatus());
-                os.flush();
-                System.out.println(user.getText());
-                System.out.println(user.getStatus());
-                
-            }
-            // 리스트의 끝을 사용자에게 알림
-            os.writeUTF("END");
-            os.flush();
-        } catch (IOException e1) {
-            e1.printStackTrace();
-        }
-		String message;
-		while (true) {
-			try {
-				//실시간으로 클라이언트에게서 메시지를 받음, 실시간 업데이트 원할때 키워드를 받으면 필요한 기능을 수행하도록 수정
-				message = is.readUTF();
-				System.out.println(message);
-				if (message.startsWith("UPDATE")) {
-					//여기서 sendUserUpdate 함수로부터 유저의 status를 실시간으로 받아서 item을 갱신. 수정하지마셍
-		            // Handle the update command
-		            String userId = is.readUTF(); // Read the user ID
-		            String newStatus = is.readUTF();
-		            System.out.println("userId: "+userId+" status: "+newStatus);
-		            ListItem userToUpdate = ChatServer.findUserById(userId);
-		            if (userToUpdate != null) {
-		                userToUpdate.setStatus(newStatus);
-		                }
-				}//edit버튼을 누르면 리스트를 가져오기
-				if (message.equals("REQUEST_USER_LIST")) { ChatServer.sendUserList();}
-				
-				if (message.equals("REQUEST_ROOM_LIST")) {
-				    // Get the room list of each user in the current room
-				            ArrayList<ServerThread> Threads = findUserThreadByRoom(currentUserRooms);
-				            for (ServerThread thread : Threads) {
-				                // Get the updated room list for the user
-				                ArrayList<Room> updatedUserRooms = ChatServer.getRoomById(thread.getThreadName());
-				                // Send the updated room list to the user
-				                ChatServer.sendRoomInfo(updatedUserRooms, thread);
-				            } 
-				    }
-				
-				//방만들기 시 신호와함께 유저리스트, 방제 보낸것을 받음
-				
-				if (message.startsWith("ROOM")) {
-					//String message2 = is.readUTF();
-					ArrayList<String> selectedUsers = new ArrayList<>();
-					 ArrayList<ListItem> selectedUserList = new ArrayList<>();
-					 
-					try {
-					    
-
-					    // Read "ROOM" and user names
-					    String data;
-					    while (!(data = is.readUTF()).equals("/")) {
-					    	//data = is.readUTF();
-					        selectedUsers.add(data);
-					    }
-
-					    // Read room subject
-					    String roomSubject = is.readUTF();
-
-					    // Process the received data
-					   
-					    for (String user : selectedUsers) {
-					        selectedUserList.add(ChatServer.findUserById(user));
-					    }
-
-					    // Create room and print information
-					    Room room = new Room(ChatServer.getNextRoomNumber(), roomSubject, selectedUserList);
-					    System.out.println("Room no:" + room.getRoomNumber() + " Room name:" + room.getRoomName());
-
-					    for (ListItem item : room.getRoomItems()) {
-					        System.out.println("Selected users:" + item.getText());
-					    }
-					    //만들어진 방을 서버의 방리스트에 추가 
-					    ChatServer.roomList.add(room);
-					    //현재유저의 초대받은 방들 찾기
-					    currentUserRooms = ChatServer.getRoomById(name);
-					    //현재 유저에게 초대받은 방을 보내기
-					    ChatServer.sendRoomInfo(currentUserRooms, this);
-
-					    /*
-					    try {
-					        Thread.sleep(10000); // Delay (for demonstration purposes)
-					    } catch (InterruptedException e) {
-					        e.printStackTrace();
-					    }*/
-					} catch (IOException e) {
-					    e.printStackTrace();
-					    // Handle the exception appropriately (e.g., close resources, log, etc.)
-					}
-				}
-				
-				if (message.equals("logout")) {
-					this.active = false;
-					this.s.close();
-					break;
-				}
-
-				//리스트에있는 클라이언트가 쓰는 메시지를 모두에게 전송
-				for (ServerThread t : ChatServer.list) {
-
-					t.os.writeUTF( this.name + ":" + message); 
-
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
-				break;
-			}
-		}
-		try {
-			this.is.close();
-			this.os.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-	public static ArrayList<ServerThread> findUserThreadByRoom(ArrayList<Room> currentRooms) {
-		 ArrayList<ServerThread> selectedThreads = new ArrayList<>();
-    for (ServerThread thread : ChatServer.list) {
-    	for (Room room : currentRooms) {
-        	ArrayList<ListItem> items = room.getRoomItems();
-        	for(ListItem item : items) {
-		        if (thread.getThreadName().equals(item.getText())) {
-		        	if (!selectedThreads.contains(thread)) {
-                        selectedThreads.add(thread);
-                    }
-		        }
-	        }
-	    }
     }
-    return selectedThreads;
-}
+    private void handleSocketException(IOException e) {
+        if (e instanceof SocketException && e.getMessage().equalsIgnoreCase("Connection reset")) {
+            System.out.println("Client disconnected: " + name);
+            active = false;
+            try {
+                is.close();
+                os.close();
+                s.close();
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
+            }
+        } else {
+            e.printStackTrace();
+        }
+    }
+    public static ArrayList<ServerThread> findUserThreadByRoom(Room room) {
+        ArrayList<ServerThread> selectedThreads = new ArrayList<>();
+        for (ServerThread thread : ChatServer.list) {
+            ArrayList<ListItem> items = room.getRoomItems();
+            for (ListItem item : items) {
+                if (thread.getThreadName().equals(item.getText())) {
+                    selectedThreads.add(thread);
+                    System.out.println("방의 참여자:" + item.getText());
+                }
+            }
+        }
+        return selectedThreads;
+    }
 
+    public static ArrayList<ServerThread> findUserThreadByCurrentRooms(ArrayList<Room> currentRooms) {
+        ArrayList<ServerThread> selectedThreads = new ArrayList<>();
+        
+        for (ServerThread thread : ChatServer.list) {
+            for (Room room : currentRooms) {
+            	
+                ArrayList<ListItem> items = room.getRoomItems();
+                for (ListItem item : items) {
+                    if (thread.getThreadName().equals(item.getText())) {
+                        if (!selectedThreads.contains(thread)) {
+                            selectedThreads.add(thread);
+                        }
+                    }
+                }
+            
+            }
+        }
+        
+        return selectedThreads;
+    }
 }

@@ -14,4 +14,16 @@
 	<natures>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>src/img/chatImg1.jpg</name>
+			<type>1</type>
+			<locationURI>PARENT-3-PROJECT_LOC/%EC%9D%B4%EB%AF%B8%EC%A7%80/chatImg1.jpg</locationURI>
+		</link>
+		<link>
+			<name>src/img/pngwing.com.png</name>
+			<type>1</type>
+			<locationURI>PARENT-3-PROJECT_LOC/%EC%9D%B4%EB%AF%B8%EC%A7%80/pngwing.com.png</locationURI>
+		</link>
+	</linkedResources>
 </projectDescription>

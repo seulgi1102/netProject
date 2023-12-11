@@ -23,7 +23,7 @@ public class Login extends JPanel {
 	protected JTextField editPort;
 	protected JTextField editUser;
 	protected JButton LoginBtn;
-	final static String ServerPort = "5002";
+	final static String ServerPort = "5001";
 	InetAddress ip = InetAddress.getLocalHost();
 	String ipAddress = ip.getHostAddress();
 	public Login() throws IOException {

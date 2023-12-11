@@ -56,7 +56,7 @@ public class ChatClient implements ActionListener{
 	
 	private void showTalkRoom(String id, String ip, Integer port ) throws IOException {
         container.remove(login);
-        talk = new TalkRoom(id, ip, port);
+        //egtalk = new TalkRoom(id, ip, port);
         
         container.add(talk.p);
         
