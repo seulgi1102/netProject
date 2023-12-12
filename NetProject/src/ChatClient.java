@@ -112,7 +112,7 @@ public class ChatClient implements ActionListener{
             // Update the WaitRoom with the new user list
             if (wait != null) {
                 wait.updateFriendList(updatedUserList);
-            }
+            }g
         }
     }*/
 	public static void main(String[] args) throws IOException{

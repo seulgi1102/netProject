@@ -78,6 +78,7 @@ public class WaitRoom extends JPanel implements ActionListener {
             // 받은 유저리스트로 gui를 초기화
             //gui(idList);
             gui(listItem);
+            currentPanel = panel;
             // 별도의 스레드를 시작하여 서버로부터 업데이트를 지속적으로 받음
             new UpdateListener().start();
             
@@ -171,7 +172,7 @@ public class WaitRoom extends JPanel implements ActionListener {
     //친구목록 업데이트
     public void updateFriendList(ArrayList<ListItem> list) {
         DefaultListModel listModel = new DefaultListModel<>();
-        String imagePath = "C:\\Users\\USER\\git\\netProject\\NetProject\\src\\img\\defaultProfile.jpeg";
+        String imagePath = "C:\\net-project\\netProject\\NetProject\\src\\img";
         ImageIcon img = new ImageIcon(imagePath);
         
         for (ListItem data : list) {
@@ -211,7 +212,7 @@ public class WaitRoom extends JPanel implements ActionListener {
         scrollPane.setBorder(new LineBorder(Color.WHITE));
         panel.add(scrollPane);
         
-        ImageIcon CreateRoomIcon = new ImageIcon("C:\\이미지\\문 이미지1\\pngwing.com.png");
+        ImageIcon CreateRoomIcon = new ImageIcon("C:\\net-project\\netProject\\NetProject\\src\\img\\door.png");
         int CRWidth = 40; 
         int CRHeight = 40; 
         Image scaledImage3 = CreateRoomIcon.getImage().getScaledInstance(CRWidth, CRHeight, Image.SCALE_SMOOTH);
@@ -260,7 +261,7 @@ public class WaitRoom extends JPanel implements ActionListener {
         add(panelChoice);
         panelChoice.setLayout(null);
         
-        ImageIcon homeIcon = new ImageIcon("C:\\이미지\\pngwing.com.png");
+        ImageIcon homeIcon = new ImageIcon("C:\\net-project\\netProject\\NetProject\\src\\img\\home.png");
         int homeWidth = 40; 
         int homeHeight = 40; 
         Image scaledImage1 = homeIcon.getImage().getScaledInstance(homeWidth, homeHeight, Image.SCALE_SMOOTH);
@@ -273,7 +274,7 @@ public class WaitRoom extends JPanel implements ActionListener {
         Home.setHorizontalAlignment(SwingConstants.CENTER);
         panelChoice.add(Home);
         
-        ImageIcon roomIcon = new ImageIcon("C:\\이미지\\이미지2\\pngwing.com.png");
+        ImageIcon roomIcon = new ImageIcon("C:\\net-project\\netProject\\NetProject\\src\\img\\chat.png");
         Image scaledImage2 = roomIcon.getImage().getScaledInstance(homeWidth, homeHeight, Image.SCALE_SMOOTH);
         ImageIcon scaledIcon2 = new ImageIcon(scaledImage2);
         Room = new JLabel();
@@ -314,8 +315,10 @@ public class WaitRoom extends JPanel implements ActionListener {
                 showNewRoomPanel roomPanel = new showNewRoomPanel(listItem,item, os);
             }
             else if (arg0.getSource() == Room) {
-            	
+            	//if(currentPanel==(panel)) {
+            	//currentPanel = allroom;
             	showRoomList();
+            	//}
             	//remove(panel);
             	
         		//allroom = new showAllRoomPanel(roomList, s, id); // 마우스클릭시 새로 패널을 만드는것은 안됨. 
@@ -326,11 +329,14 @@ public class WaitRoom extends JPanel implements ActionListener {
             }
 
             else if (arg0.getSource() == Home) {
+            	//if(currentPanel==allroom) {
             	//removeCurrentPanel();
+            	//currentPanel = panel;
             	remove(allroom);
             	add(panel);
             	revalidate();
             	repaint();
+            	
             }      
         }
     }
@@ -430,6 +436,7 @@ public class WaitRoom extends JPanel implements ActionListener {
 //---------------------------------------------------------TalkRoom 채팅방 클래스
 //내포클래스로 수정
     public class TalkRoom extends JFrame {
+    	protected JScrollPane scrollPane;
         protected JTextField textField;
         protected static JTextArea textArea;
         protected DataInputStream is;
@@ -439,7 +446,9 @@ public class WaitRoom extends JPanel implements ActionListener {
         protected Socket s;
         protected JLabel roomName;
         protected Room selectedRoom;
-
+        protected ImageIcon backIcon;
+        protected JLabel backLabel;
+        protected JLabel sendLabel;
         public TalkRoom(String id, Room selectedRoom, Socket s) throws IOException {
             this.id = id;
             this.s = s;
@@ -453,28 +462,114 @@ public class WaitRoom extends JPanel implements ActionListener {
     	// Internal class definition
         class MyPanel extends JPanel implements ActionListener {
             public MyPanel() {
-                setBackground(new Color(249, 235, 153));
-                setBounds(0, 0, 400, 600);
+            	setBackground(new Color(249, 235, 153));
+                setBounds(0, 0, 390, 600);
+                setBackground(new Color(227, 227, 234));
                 textField = new JTextField(30);
-                textField.setBounds(12, 506, 357, 40);
-                textField.addActionListener(this);
+                textField.setBounds(64, 500, 250, 40);
+                textField.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));  
+                //textField.addActionListener(this);
+                add(textField);
 
-                textArea = new JTextArea(10, 30);
-               
-                textArea.setBounds(12, 53, 357, 435);
+                textArea = new JTextArea();
+                textArea.setFont(new Font("굴림", Font.PLAIN, 18));
+                textArea.setBounds(0, 0, 360, 449);
                 textArea.setEditable(false);
                 setLayout(null);
-
-                roomName = new JLabel(selectedRoom.getRoomName());
-                roomName.setBounds(90, 8, 200, 40);
-                add(roomName);
-
-                add(textField);
                 add(textArea);
+                
+                        
+          
+                backIcon = new ImageIcon("C:\\net-project\\netProject\\NetProject\\src\\img\\back1.png");
+                int backWidth = 40; 
+                int backHeight = 40; 
+                Image scaledImage4 = backIcon.getImage().getScaledInstance(backWidth, backHeight, Image.SCALE_SMOOTH);
+                ImageIcon scaledIcon4 = new ImageIcon(scaledImage4);
+                backLabel = new JLabel();
+                //lblNewLabel.setFont(new Font("굴림", Font.PLAIN, 20));
+                backLabel.setIcon(scaledIcon4);
+                backLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+                
+                
+                
+                ImageIcon letterIcon = new ImageIcon("C:\\net-project\\netProject\\NetProject\\src\\img\\letter.png");
+                Image scaledImage2 = letterIcon.getImage().getScaledInstance(backWidth, backHeight, Image.SCALE_SMOOTH);
+                ImageIcon scaledIcon2 = new ImageIcon(scaledImage2);
+                JLabel letterLabel = new JLabel();
+                //lblNewLabel_2.setFont(new Font("굴림", Font.PLAIN, 20));
+                letterLabel.setIcon(scaledIcon2);
+                letterLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
+                JPanel panel = new JPanel();
+                panel.setBackground(new Color(197, 95, 146));
+                panel.setLayout(new BorderLayout());
+                panel.setBounds(0, 0, 378, 40);
+                panel.add(backLabel, BorderLayout.WEST);
+                panel.add(letterLabel, BorderLayout.EAST);
+                
+                roomName = new JLabel(selectedRoom.getRoomName());
+                roomName.setFont(new Font("굴림", Font.PLAIN, 20));
+                roomName.setBounds(12, 12,150, 33);
+                roomName.setForeground(new Color(255, 255, 255));
+                roomName.setBackground(new Color(128, 128, 192));
+                panel.add(roomName);
+                add(panel);
+                
+                ImageIcon sendIcon = new ImageIcon("C:\\net-project\\netProject\\NetProject\\src\\img\\send.png");
+                Image scaledImage3 = sendIcon.getImage().getScaledInstance(backWidth, backHeight, Image.SCALE_SMOOTH);
+                ImageIcon scaledIcon3 = new ImageIcon(scaledImage3);
+
+                sendLabel = new JLabel();
+                sendLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+                sendLabel.setIcon(scaledIcon3);
+                sendLabel.setBounds(316, 500, 45, 40);
+                add(sendLabel);
+                
+                
+                ImageIcon imoticonIcon = new ImageIcon("C:\\net-project\\netProject\\NetProject\\src\\img\\imoticon.png");
+                Image scaledImage1 = imoticonIcon.getImage().getScaledInstance(backWidth, backHeight, Image.SCALE_SMOOTH);
+                ImageIcon scaledIcon1 = new ImageIcon(scaledImage1);
+                JLabel imoticonLabel= new JLabel();
+                //lblNewLabel_2.setFont(new Font("굴림", Font.PLAIN, 20));
+                imoticonLabel.setIcon(scaledIcon1);
+                imoticonLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));  
+                imoticonLabel.setBounds(10, 500, 45, 40);
+                add(imoticonLabel);
+                
+                scrollPane = new JScrollPane(textArea);
+                scrollPane.setBounds(0, 39, 390, 449);
+                add(scrollPane);
+                backLabel.addMouseListener(new MyMouseListener());
+                sendLabel.addMouseListener(new MyMouseListener());
                 setVisible(true);
-            }
+        	}
+            class MyMouseListener extends MouseAdapter {
+                public void mouseClicked(MouseEvent arg0) {
+                	
+                    if (arg0.getSource() == backLabel) {
+                    	ChatClient.container.remove(allroom.talkRoom.p);
+                		allroom = new showAllRoomPanel(roomList, s, id);
+                		ChatClient.wait.panel = allroom;
+                		ChatClient.container.add(ChatClient.wait);
+                		ChatClient.frame.revalidate();
+                		ChatClient.frame.repaint();
+                    
+                    }
 
+                    else if (arg0.getSource() == sendLabel) {
+                    	String message = textField.getText();
+                        try {
+                            os.writeUTF("MESSAGE" + selectedRoom.getRoomNumber() + "/" + id + "/" + message);
+                            os.flush();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        textArea.append(id+" : " + message + "\n");
+                        textField.selectAll();
+                        textArea.setCaretPosition(textArea.getDocument().getLength());
+                    }      
+                }
+            }
             public void actionPerformed(ActionEvent evt) {
                 String message = textField.getText();
                 try {
@@ -516,6 +611,7 @@ public class WaitRoom extends JPanel implements ActionListener {
         	this.allRoom = allRoom;
         	this.id = id;
         	this.s = s;
+        	currentPanel = allroom;
         	//allRoom.add(new Room(1, "Test Room 1", null));
             //allRoom.add(new Room(2, "Test Room 2", null));
             //allRoom.add(new Room(3, "Test Room 3", null));
@@ -584,8 +680,8 @@ public class WaitRoom extends JPanel implements ActionListener {
     	private void navigateToTalkRoom(Room selectedRoom) throws IOException {
     		// TODO Auto-generated method stub
     		ChatClient.container.remove(ChatClient.wait);
-    		TalkRoom talkRoom = new TalkRoom(id, selectedRoom, s);
-    		this.talkRoom = talkRoom;
+    		talkRoom = new TalkRoom(id, selectedRoom, s);
+    		
     		ChatClient.container.add(talkRoom.p);
     		ChatClient.frame.revalidate();
     		ChatClient.frame.repaint();
@@ -752,7 +848,7 @@ public class WaitRoom extends JPanel implements ActionListener {
 
     		        os.writeUTF(userId);
     		        os.writeUTF(newStatus); // Send the new status
-    		        sendImageData(profileImageIcon, os);
+    		        
     		        
     		        os.writeUTF("END");
 
@@ -763,33 +859,7 @@ public class WaitRoom extends JPanel implements ActionListener {
     		        // Handle the exception appropriately
     		    }
     		}
-    		private void sendImageData(ImageIcon profileImageIcon, DataOutputStream os) throws IOException {
-    		    // Convert the ImageIcon to byte array
-    		    BufferedImage bufferedImage = new BufferedImage(
-    		            profileImageIcon.getIconWidth(),
-    		            profileImageIcon.getIconHeight(),
-    		            BufferedImage.TYPE_INT_RGB
-    		    );
-    		    Graphics g = bufferedImage.createGraphics();
-    		    // Paint the ImageIcon to the BufferedImage
-    		    profileImageIcon.paintIcon(null, g, 0, 0);
-    		    g.dispose();
 
-    		    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    		    ImageIO.write(bufferedImage, "png", baos);
-
-    		    // Convert the ByteArrayOutputStream to byte array
-    		    byte[] imageBytes = baos.toByteArray();
-
-    		    // Send the image size and then the image data
-    		    os.writeInt(imageBytes.length);
-    		    os.write(imageBytes);
-    		}
-    	    private ImageIcon getNewProfileImage() {
-    	        // Implement logic to get the new profile image (e.g., from file chooser)
-    	        // Return the ImageIcon representing the new profile image
-    	        return null;
-    	    }
     	}
 }
 

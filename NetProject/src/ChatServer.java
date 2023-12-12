@@ -239,7 +239,7 @@ class ServerThread extends Thread {
     }
 
     @Override
-    public void run() {
+    public void run() { //처음로그인한 사람이 이것을 전달받아 화면에띄움
         try {
             os.writeUTF("UPDATE");
             for (ListItem user : uList) {
@@ -388,13 +388,14 @@ class ServerThread extends Thread {
         
         for (ServerThread thread : ChatServer.list) {
             for (Room room : currentRooms) {
-            	
+            	if (room != null) { 
                 ArrayList<ListItem> items = room.getRoomItems();
                 for (ListItem item : items) {
                     if (thread.getThreadName().equals(item.getText())) {
                         if (!selectedThreads.contains(thread)) {
                             selectedThreads.add(thread);
                         }
+                    }
                     }
                 }
             
