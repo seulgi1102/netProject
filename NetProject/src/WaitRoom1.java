@@ -1,11 +1,14 @@
 import javax.swing.JPanel;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.Font;
 import java.io.IOException;
 import java.util.ArrayList;
 import javax.swing.JPanel;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
 
@@ -13,9 +16,11 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.border.LineBorder;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.FlowLayout;
 
-public class WaitRoom1 extends JPanel {
+public class WaitRoom1 extends JPanel implements ActionListener{
 	public static void main(String[] args) throws IOException {
        WaitRoom1 w2 = new WaitRoom1();
     }
@@ -87,4 +92,5 @@ public class WaitRoom1 extends JPanel {
 	        newRoom.addActionListener(this);
 
 	}
+	
 }

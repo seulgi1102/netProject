@@ -141,15 +141,31 @@ public class WaitRoom extends JPanel implements ActionListener {
             String[] parts = roomInfo.split("/");
             String roomName = null;
             Integer roomNumber = null;
+            String AllUserName = null;
+            ArrayList<String> userNames = new ArrayList<>(); 
             // Extract room information as needed
             for (String part : parts) {
                 if (part.startsWith("RNAME:")) {
                     roomName = part.substring(6);
                 } else if (part.startsWith("RNUM:")) {
                     roomNumber = Integer.parseInt(part.substring(5));
-                } 
+                } else if (part.startsWith("USERID:")) {
+                	AllUserName = part.substring(7);
+                	 String[] userParts = AllUserName.split("\\|");
+                	 for(String userPart: userParts) {
+                		 userNames.add(userPart);
+                		// System.out.println("client: "+userPart);
+                	 }
+
+                }
+                
             }
-            roomList.add(new Room(roomNumber, roomName, null));
+            Room room = new Room(roomNumber, roomName, null);
+            room.setUserList(userNames);
+            for(String user: room.getUserList()) {
+            	System.out.println("client: "+user);
+       	 	}
+            roomList.add(room);
             // Do something with the room information, e.g., update GUI
             
             // ... (update GUI or perform other actions as needed)
@@ -239,8 +255,8 @@ public class WaitRoom extends JPanel implements ActionListener {
         image = new JLabel();
         ImageIcon originalIcon = item.getProfileImage();
         // Resize the ImageIcon to the desired width and height
-        int newWidth = 40; // Set the desired width
-        int newHeight = 40; // Set the desired height
+        int newWidth = 50; // Set the desired width
+        int newHeight = 50; // Set the desired height
         Image scaledImage = originalIcon.getImage().getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
         ImageIcon scaledIcon = new ImageIcon(scaledImage);
         
@@ -449,6 +465,7 @@ public class WaitRoom extends JPanel implements ActionListener {
         protected ImageIcon backIcon;
         protected JLabel backLabel;
         protected JLabel sendLabel;
+        protected JLabel letterLabel;
         public TalkRoom(String id, Room selectedRoom, Socket s) throws IOException {
             this.id = id;
             this.s = s;
@@ -460,7 +477,7 @@ public class WaitRoom extends JPanel implements ActionListener {
         }
 
     	// Internal class definition
-        class MyPanel extends JPanel implements ActionListener {
+        class MyPanel extends JPanel{
             public MyPanel() {
             	setBackground(new Color(249, 235, 153));
                 setBounds(0, 0, 390, 600);
@@ -495,7 +512,7 @@ public class WaitRoom extends JPanel implements ActionListener {
                 ImageIcon letterIcon = new ImageIcon("C:\\net-project\\netProject\\NetProject\\src\\img\\letter.png");
                 Image scaledImage2 = letterIcon.getImage().getScaledInstance(backWidth, backHeight, Image.SCALE_SMOOTH);
                 ImageIcon scaledIcon2 = new ImageIcon(scaledImage2);
-                JLabel letterLabel = new JLabel();
+                letterLabel = new JLabel();
                 //lblNewLabel_2.setFont(new Font("굴림", Font.PLAIN, 20));
                 letterLabel.setIcon(scaledIcon2);
                 letterLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -541,6 +558,7 @@ public class WaitRoom extends JPanel implements ActionListener {
                 add(scrollPane);
                 backLabel.addMouseListener(new MyMouseListener());
                 sendLabel.addMouseListener(new MyMouseListener());
+                letterLabel.addMouseListener(new MyMouseListener());
                 setVisible(true);
         	}
             class MyMouseListener extends MouseAdapter {
@@ -548,7 +566,12 @@ public class WaitRoom extends JPanel implements ActionListener {
                 	
                     if (arg0.getSource() == backLabel) {
                     	ChatClient.container.remove(allroom.talkRoom.p);
-                		allroom = new showAllRoomPanel(roomList, s, id);
+                		try {
+							allroom = new showAllRoomPanel(roomList, s, id);
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
                 		ChatClient.wait.panel = allroom;
                 		ChatClient.container.add(ChatClient.wait);
                 		ChatClient.frame.revalidate();
@@ -567,24 +590,18 @@ public class WaitRoom extends JPanel implements ActionListener {
                         textArea.append(id+" : " + message + "\n");
                         textField.selectAll();
                         textArea.setCaretPosition(textArea.getDocument().getLength());
-                    }      
+                    }
+                    else if (arg0.getSource() == letterLabel) {
+                    	try {
+							sendLetterPanel letter = new sendLetterPanel(selectedRoom, s, selectedRoom.getRoomNumber(), id);
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+                    }
                 }
             }
-            public void actionPerformed(ActionEvent evt) {
-                String message = textField.getText();
-                try {
-                    os.writeUTF("MESSAGE" + selectedRoom.getRoomNumber() + "/" + id + "/" + message);
-                    os.flush();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                
-
-
-                textArea.append(id+" : " + message + "\n");
-                textField.selectAll();
-                textArea.setCaretPosition(textArea.getDocument().getLength());
-            }
+            
         }
 
         public static void main(String[] args) throws IOException {
@@ -607,11 +624,13 @@ public class WaitRoom extends JPanel implements ActionListener {
         protected String id;
         protected Room selectedRoom;
         protected TalkRoom talkRoom;
-        public showAllRoomPanel(ArrayList<Room> allRoom, Socket s, String id) {
+        public showAllRoomPanel(ArrayList<Room> allRoom, Socket s, String id) throws IOException {
         	this.allRoom = allRoom;
         	this.id = id;
         	this.s = s;
         	currentPanel = allroom;
+        	is = new DataInputStream(s.getInputStream());
+            os = new DataOutputStream(s.getOutputStream());
         	//allRoom.add(new Room(1, "Test Room 1", null));
             //allRoom.add(new Room(2, "Test Room 2", null));
             //allRoom.add(new Room(3, "Test Room 3", null));
@@ -670,6 +689,8 @@ public class WaitRoom extends JPanel implements ActionListener {
         			
         			try {
         				navigateToTalkRoom(selectedRoom);
+        				//os.writeUTF("ENTER" + roomNumber + "/" + id + "/" + "님이 입장했습니다");
+        	            //os.flush();
         				//서버로 해당유저가 입장했음을 알리는 신호를 보내야함,
         			}catch(IOException el) {
         				el.printStackTrace();
@@ -681,10 +702,13 @@ public class WaitRoom extends JPanel implements ActionListener {
     		// TODO Auto-generated method stub
     		ChatClient.container.remove(ChatClient.wait);
     		talkRoom = new TalkRoom(id, selectedRoom, s);
-    		
     		ChatClient.container.add(talkRoom.p);
     		ChatClient.frame.revalidate();
     		ChatClient.frame.repaint();
+    		
+    		int roomNumber = selectedRoom.getRoomNumber();
+    		//os.writeUTF("ENTER" + roomNumber + "/" + id + "/" + "님이 입장했습니다");
+            //os.flush();
     	}
     }
 
@@ -816,8 +840,19 @@ public class WaitRoom extends JPanel implements ActionListener {
     			if(e.getSource()==editBtn) {
     				updateUserSettings();
     				sendRequestForUserList();
-    				currentStatus.setText(statusTextField.getText());
-    				image.setIcon(lblNewLabel_2.getIcon());
+    				ImageIcon originalIcon = (ImageIcon) lblNewLabel_2.getIcon();
+    			    Image originalImage = originalIcon.getImage();
+
+    			    int newWidth = 50; // Set the desired width
+    			    int newHeight = 50; // Set the desired height
+
+    			    Image resizedImage = originalImage.getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
+    			    ImageIcon resizedIcon = new ImageIcon(resizedImage);
+
+    			    // Set the resized image in the JLabel
+    			    image.setIcon(resizedIcon);
+    			    
+    				
     				dispose();
     			}
     		}
@@ -835,7 +870,7 @@ public class WaitRoom extends JPanel implements ActionListener {
     		    String userId = currentUser.getText();
     		    String newStatus = statusTextField.getText();
     		    ImageIcon profileImageIcon = (ImageIcon) lblNewLabel_2.getIcon();
-
+    		    currentStatus.setText(newStatus);
     		    // Send the updated information to the server
     		    sendUserUpdate(userId, newStatus, profileImageIcon);
     		    dispose();

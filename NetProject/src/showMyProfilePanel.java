@@ -5,8 +5,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -133,21 +135,27 @@ class showMyProfilePanel extends JFrame implements ActionListener {
 		private void updateUserSettings(DataOutputStream os) {
 		    String userId = currentUser.getText();
 		    String newStatus = statusTextField.getText();
-
+		    ImageIcon newProfileImage = getNewProfileImage();
 		    // Send the updated information to the server
-		    sendUserUpdate(userId, newStatus, os);
+		    sendUserUpdate(userId, newStatus, newProfileImage, os);
 		    // Dispose the profile panel
 		    dispose();
 		}
 
-		private void sendUserUpdate(String userId, String newStatus, DataOutputStream os) {
+		private void sendUserUpdate(String userId, String newStatus, ImageIcon newProfileImage, DataOutputStream os) {
 		    try {
-		        // Send the updated user information to the server
+		      
 		        os.writeUTF("UPDATE");
 		        os.writeUTF("CURRENTUID:"+userId); // Send the old user ID 
 		        os.writeUTF("STATUS:"+newStatus); // Send the new status
-
-		        // Notify the server that the data transmission is complete
+		        
+		        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		        ObjectOutputStream oos = new ObjectOutputStream(baos);
+		        oos.writeObject(newProfileImage);
+		        byte[] imageBytes = baos.toByteArray();
+		        os.writeInt(imageBytes.length);
+		        os.write(imageBytes);
+		        
 		        os.writeUTF("END");
 
 		        // Flush the output stream to ensure data is sent immediately
@@ -159,8 +167,7 @@ class showMyProfilePanel extends JFrame implements ActionListener {
 		}
 
 	    private ImageIcon getNewProfileImage() {
-	        // Implement logic to get the new profile image (e.g., from file chooser)
-	        // Return the ImageIcon representing the new profile image
+	       
 	        return null;
 	    }
 	   

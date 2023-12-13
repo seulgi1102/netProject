@@ -117,15 +117,45 @@ public class ChatServer {
                 t.os.flush();
                 System.out.println("SENT: " + userName + " To: " + t.getThreadName() + " : " + message);
             } else {
-                // Handle the case where the socket is closed (e.g., client disconnected)
-                // You might want to remove the ServerThread from the list in this case
+                
             }
         } catch (IOException e) {
-            // Handle the exception (e.g., log or print the error)
+           
             e.printStackTrace();
         }
     }
-
+    public static void sendEnterMessage(ServerThread t, String userName, String message,Set<String> usersInRoom) {
+        try {
+            if (t.s != null && !t.s.isClosed()) {
+            	if (usersInRoom.contains(userName)) {
+                t.os.writeUTF("MESSAGE" +"[입장메시지] "+ userName+"/"+message);
+                t.os.flush();
+                System.out.println("SENT To All: " + userName + " To: " + t.getThreadName() + " : " + message);
+            	} else {
+                System.out.println("User " + userName + " has not entered the room. Entrance message not sent.");
+            	}
+            } else {
+                
+            }
+        } catch (IOException e) {
+           
+            e.printStackTrace();
+        }
+    }
+    public static void sendLetter(ServerThread t, String receiver, String sender, String message) {
+        try {
+            if (t.s != null && !t.s.isClosed()&& !t.getThreadName().equals(sender)) {
+                t.os.writeUTF("MESSAGE" +"[쪽지] from: "+sender+"/"+message);
+                t.os.flush();
+                System.out.println("LETTER SENT: " + sender + " To: " + t.getThreadName() + " : " + message);
+            } else {
+                
+            }
+        } catch (IOException e) {
+            
+            e.printStackTrace();
+        }
+    }
     // 연결된 클라이언트들에게 현재 사용자 목록을 모두 클라이언트에게 전송, 모두 전송하면 END, to updateListener
     public static void sendUserList() {
         for (ServerThread t : list) {
@@ -154,10 +184,20 @@ public class ChatServer {
             	thread.os.writeUTF("ROOM_UPDATE");
             	for (Room room : userRooms) {
             		if (room != null) {
-            		//thread.os.writeUTF("RNAME:" + room.getRoomName() + "/"+"RNUM:" + room.getRoomNumber() + "/"+"RITEMS"+room.getRoomItems());
-            		thread.os.writeUTF("RNAME:" + room.getRoomName() + "/"+"RNUM:" + room.getRoomNumber());
-            		thread.os.flush();
-            		System.out.println("RNAME:" + room.getRoomName() + "/"+"RNUM:" + room.getRoomNumber());
+            			StringBuilder messageBuilder = new StringBuilder();
+            			messageBuilder.append("RNAME:").append(room.getRoomName()).append("/")
+            			        .append("RNUM:").append(room.getRoomNumber()).append("/").append("USERID:");
+
+            			// roomItems의 각 ListItem 객체에서 UserID를 가져와 추가
+            			for (ListItem userRoom : room.getRoomItems()) {
+            			    messageBuilder.append(userRoom.getText()).append("|");
+            			    System.out.println(userRoom.getText());
+            			}
+            			// 최종적인 문자열을 만들어서 전송
+            			String message = messageBuilder.toString();
+            			thread.os.writeUTF(message);
+            			thread.os.flush();
+            			System.out.println("RNAME:" + room.getRoomName() + "/"+"RNUM:" + room.getRoomNumber());
             	
             		}
             	}
@@ -257,16 +297,18 @@ class ServerThread extends Thread {
             try {
                 message = is.readUTF();
                 System.out.println(message);
-
+                
                 //String message = is.readUTF();
                 if(message.startsWith("MESSAGE")) {
 					//String allInfo = is.readUTF();
 					String allInfo = message.substring(7);
 					String[] allInfoParts = allInfo.split("/");
-					
+					//String messages = "		";
 					int roomNumber = Integer.parseInt(allInfoParts[0]);
 					String userName = allInfoParts[1];
+					//if(allInfoParts.length > 2) {
 					String messages = allInfoParts[2];
+					//}
 					System.out.println("Server: while() / roomNumber: "+roomNumber+" userNmae: "+userName+" message: "+messages);
 					Room room = ChatServer.getRoomByRoomNumber(roomNumber);
 					ArrayList<ServerThread> Threads = findUserThreadByRoom(room);
@@ -274,7 +316,55 @@ class ServerThread extends Thread {
 						ChatServer.sendMessage(t,userName,messages);
 					}
 
+				}if(message.startsWith("LETTER")) {
+					//String allInfo = is.readUTF();
+					String allInfo = message.substring(6);
+					ArrayList<String> receivers = new ArrayList<>();
+					ArrayList<ServerThread> receiveThread = new ArrayList<>();
+					String[] allInfoParts = allInfo.split("/");
+					
+					int roomNumber = Integer.parseInt(allInfoParts[0]);
+					String receiver = allInfoParts[1];
+					String sender = allInfoParts[2];
+					String messages = allInfoParts[3];
+					String[] receiverParts = receiver.split("//|");
+					for(String part : receiverParts) {
+						receivers.add(part);
+					}
+					System.out.println("Letter Server: while() / roomNumber: "+roomNumber+" receiver: "+receiver+"sender: "+sender+" message: "+messages);
+					Room room = ChatServer.getRoomByRoomNumber(roomNumber);
+					ArrayList<ServerThread> Threads = findUserThreadByRoom(room);
+					for(ServerThread t: Threads) {
+						for(String r : receivers) {
+						if(t.getThreadName().equals(r)) {
+							receiveThread.add(t);
+						}
+						}
+					}
+					
+					for(ServerThread t : receiveThread) {
+						ChatServer.sendLetter(t,receiver,sender,messages);
+					}
+
 				}
+				/*
+				if(message.startsWith("ENTER")) {
+					//String allInfo = is.readUTF();
+					String allInfo = message.substring(5);
+					Set<String> usersInRoom = new HashSet<>();
+					String[] allInfoParts = allInfo.split("/");
+					
+					int roomNumber = Integer.parseInt(allInfoParts[0]);
+					String userName = allInfoParts[1];
+					String messages = allInfoParts[2];
+					usersInRoom.add(userName);
+					System.out.println("ENTER Server: while() / roomNumber: "+roomNumber+" userNmae: "+userName+" message: "+messages);
+					Room room = ChatServer.getRoomByRoomNumber(roomNumber);
+					ArrayList<ServerThread> Threads = findUserThreadByRoom(room);
+					for(ServerThread t : Threads) {
+						ChatServer.sendEnterMessage(t,userName,messages,usersInRoom);
+					}
+					}*/
                 if (message.startsWith("UPDATE")) {
                     String userId = is.readUTF();
                     String newStatus = is.readUTF();
@@ -292,7 +382,9 @@ class ServerThread extends Thread {
                 if (message.equals("REQUEST_ROOM_LIST")) {
                 	if(!(currentUserRooms == null)) {
                    ArrayList<ServerThread> threads = findUserThreadByCurrentRooms(currentUserRooms);
-                   
+                   for(Room room :currentUserRooms) {
+                	   
+                   }
                    for (ServerThread thread : threads) {
                         ArrayList<Room> updatedUserRooms = ChatServer.getRoomById(thread.getThreadName());
                         ChatServer.sendRoomInfo(updatedUserRooms, thread);
