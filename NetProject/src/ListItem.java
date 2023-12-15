@@ -5,7 +5,7 @@ public class ListItem {
     private ImageIcon profileImage;
     private int roomNumber;
     private String status;
-    private static String imagePath = "C:\\net-project\\netProject\\NetProject\\src\\img\\defaultProfile.jpeg";
+    private static String imagePath = "C:\\net-project\\netProject\\NetProject\\src\\img\\man5.png";
     private static final ImageIcon DEFAULT_PROFILE_IMAGE = new ImageIcon(imagePath);
     
     public ListItem(String text, ImageIcon profileImage, String status) {

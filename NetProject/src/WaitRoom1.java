@@ -92,5 +92,4 @@ public class WaitRoom1 extends JPanel implements ActionListener{
 	        newRoom.addActionListener(this);
 
 	}
-	
 }
