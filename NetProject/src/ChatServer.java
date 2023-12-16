@@ -124,6 +124,17 @@ public class ChatServer {
             e.printStackTrace();
         }
     }
+    public static void sendimoMessage(ServerThread t, String userName, int imoticonNumber) {
+        try {
+            if (t.s != null && !t.s.isClosed()&& !t.getThreadName().equals(userName)) {
+                t.os.writeUTF("IMOMESSAGE" +userName+"/"+imoticonNumber);
+                t.os.flush();
+                System.out.println("IMOSENT: " + userName + " To: " + t.getThreadName() + " : " + imoticonNumber);
+            } else {}
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
     public static void sendEnterMessage(ServerThread t, String userName, String message,Set<String> usersInRoom) {
         try {
             if (t.s != null && !t.s.isClosed()) {
@@ -346,6 +357,19 @@ class ServerThread extends Thread {
 						ChatServer.sendLetter(t,receiver,sender,messages);
 					}
 
+				}if(message.startsWith("IMOTICON")) {
+					String allInfo = message.substring(8);
+					String[] allInfoParts = allInfo.split("/");
+					int roomNumber = Integer.parseInt(allInfoParts[0]);
+					String userName = allInfoParts[1];
+					int imoticonNumber = Integer.parseInt(allInfoParts[2]);
+					
+					System.out.println("Server: while() / roomNumber: "+roomNumber+" userNmae: "+userName+" message: "+imoticonNumber);
+					Room room = ChatServer.getRoomByRoomNumber(roomNumber);
+					ArrayList<ServerThread> Threads = findUserThreadByRoom(room);
+					for(ServerThread t : Threads) {
+						ChatServer.sendimoMessage(t,userName,imoticonNumber);
+					}
 				}
 				/*
 				if(message.startsWith("ENTER")) {

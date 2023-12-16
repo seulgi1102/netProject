@@ -19,7 +19,6 @@ public class ChatClient implements ActionListener{
 	static JPanel present = new JPanel();
 	static Login login;
 	static JFrame frame;
-	static TalkRoom talk;
 	static WaitRoom wait;
 	static Container container;
 	ArrayList<String> userList;
@@ -58,7 +57,6 @@ public class ChatClient implements ActionListener{
         container.remove(login);
         //egtalk = new TalkRoom(id, ip, port);
         
-        container.add(talk.p);
         
 // 프레임 다시 표시
         frame.revalidate();
