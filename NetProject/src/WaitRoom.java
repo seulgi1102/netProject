@@ -147,6 +147,7 @@ public class WaitRoom extends JPanel implements ActionListener {
             String roomNotice = null;
             ArrayList<String> userNames = new ArrayList<>(); 
             Integer roomImageNumber = null;
+            String roomContent = null;
             // Extract room information as needed
             for (String part : parts) {
                 if (part.startsWith("RNAME:")) {
@@ -157,6 +158,8 @@ public class WaitRoom extends JPanel implements ActionListener {
                     roomNotice = part.substring(8);
                 }else if (part.startsWith("RIMAGE:")) {
                 	roomImageNumber = Integer.parseInt(part.substring(7));
+                }else if (part.startsWith("RCONTENT:")) {
+                	roomContent = part.substring(9);
                 }else if (part.startsWith("USERID:")) {
                 	AllUserName = part.substring(7);
                 	 String[] userParts = AllUserName.split("\\|");
@@ -169,6 +172,7 @@ public class WaitRoom extends JPanel implements ActionListener {
                 
             }
             Room room = new Room(roomNumber, roomName, null);
+            room.setRoomContent(roomContent);
             room.setNotice(roomNotice);
             room.setUserList(userNames);
             room.setImageNumber(roomImageNumber);
@@ -187,6 +191,7 @@ public class WaitRoom extends JPanel implements ActionListener {
             System.out.println("Received Room Number: " + room.getRoomName());
             System.out.println("Received Room Notice: " + room.getNotice());
             System.out.println("Received Room Image Number: " + room.getImageNumber());
+            System.out.println("Received Room Content: " + room.getRoomContent());
             }
     }
 
@@ -611,6 +616,7 @@ public class TalkRoom extends JFrame {
         add(textField);
 
         textArea = new JTextArea();
+        textArea.setText(selectedRoom.getRoomContent());
         textArea.setFont(new Font("굴림", Font.PLAIN, 18));
         textArea.setBounds(0, 0, 360, 449);
         textArea.setEditable(false);
@@ -695,12 +701,23 @@ public class TalkRoom extends JFrame {
         letterLabel.addMouseListener(new MyMouseListener());
         noticeLabel.addMouseListener(new MyMouseListener());
         setVisible(true);
-	}
+	 }
             class MyMouseListener extends MouseAdapter {
                 public void mouseClicked(MouseEvent arg0) {
                 	
                     if (arg0.getSource() == backLabel) {
-                    	//ChatClient.container.remove(allroom.talkRoom.p);
+                    	/*String content = textArea.getText();
+                    	//------------------------------------------------------채팅방 내용 구현해야됨
+                			try {
+                				os.writeUTF("CONTENT"+ selectedRoom.getRoomNumber()+"/"+id+"/"+content);
+                				os.flush();
+                				//WaitRoom.Notice.setNoticeContent(content);
+                			} catch (IOException e1) {
+                				// TODO Auto-generated catch block
+                				e1.printStackTrace();
+                			}
+                			//sendRequestForRoomNotice();
+                			sendRequestForRoomList(); // 바로 업데이트된 룸 리스트를 받기위함. 나중에 채팅방 입장시에도 사용.*/
                 		dispose();
                     
                     }
@@ -716,6 +733,16 @@ public class TalkRoom extends JFrame {
                         textArea.append(id+" : " + message + "\n");
                         textField.selectAll();
                         textArea.setCaretPosition(textArea.getDocument().getLength());
+                        String content = textArea.getText();
+                        try {
+            				os.writeUTF("CONTENT"+ selectedRoom.getRoomNumber()+"/"+id+"/"+content);
+            				os.flush();
+            				//WaitRoom.Notice.setNoticeContent(content);
+            			} catch (IOException e1) {
+            				// TODO Auto-generated catch block
+            				e1.printStackTrace();
+            			}
+                        sendRequestForRoomList();
                     }
                     else if (arg0.getSource() == letterLabel) {
                     	try {
@@ -851,7 +878,7 @@ public class TalkRoom extends JFrame {
     		// TODO Auto-generated method stub
     		talkRoom = new TalkRoom(id, selectedRoom, s);
     		
-    		int roomNumber = selectedRoom.getRoomNumber();
+    		//int roomNumber = selectedRoom.getRoomNumber();
     		//os.writeUTF("ENTER" + roomNumber + "/" + id + "/" + "님이 입장했습니다");
             //os.flush();
     	}

@@ -159,7 +159,7 @@ public class ChatServer {
     public static void sendLetter(ServerThread t, String receiver, String sender, String message) {
         try {
             if (t.s != null && !t.s.isClosed()&& !t.getThreadName().equals(sender)) {
-                t.os.writeUTF("MESSAGE" +"[쪽지] from: "+sender+"/"+message);
+                t.os.writeUTF("MESSAGE" +"[쪽지] from "+sender+"/"+message);
                 t.os.flush();
                 System.out.println("LETTER SENT: " + sender + " To: " + t.getThreadName() + " : " + message);
             } else {
@@ -200,7 +200,7 @@ public class ChatServer {
             		if (room != null) {
             			StringBuilder messageBuilder = new StringBuilder();
             			messageBuilder.append("RNAME:").append(room.getRoomName()).append("/")
-            			        .append("RNUM:").append(room.getRoomNumber()).append("/").append("RNOTICE:").append(room.getNotice()).append("/").append("RIMAGE:").append(room.getImageNumber()).append("/").append("USERID:");
+            			        .append("RNUM:").append(room.getRoomNumber()).append("/").append("RNOTICE:").append(room.getNotice()).append("/").append("RIMAGE:").append(room.getImageNumber()).append("/").append("RCONTENT:").append(room.getRoomContent()).append("/").append("USERID:");
 
             			// roomItems의 각 ListItem 객체에서 UserID를 가져와 추가
             			for (ListItem userRoom : room.getRoomItems()) {
@@ -374,11 +374,18 @@ class ServerThread extends Thread {
 					room.setNotice(content);
 					System.out.println("서버 : 방 공지사항: "+ room.getNotice());
 					
-					//ChatServer.sendRoomNotice(this, room);
-					//ArrayList<ServerThread> Threads = findUserThreadByRoom(room);
-					//for(ServerThread t : receiveThread) {
-						//ChatServer.sendNotice(t,receiver,sender,messages);
-					//}
+				}
+				if(message.startsWith("CONTENT")) {
+					ArrayList<ServerThread> receiveThread = new ArrayList<>();
+					String allNotice = message.substring(7);
+					String[] allNoticeParts = allNotice.split("/");
+					int roomNumber = Integer.parseInt(allNoticeParts[0]);
+					String userName = allNoticeParts[1];
+					String content = allNoticeParts[2];
+					Room room = ChatServer.getRoomByRoomNumber(roomNumber);
+					room.setRoomContent(content);
+					System.out.println("서버 : 방 채팅내역: "+ room.getRoomContent());
+					
 				}
 				/*
 				if(message.startsWith("ENTER")) {
