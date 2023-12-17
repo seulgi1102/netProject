@@ -126,7 +126,8 @@ public class ChatServer {
     }
     public static void sendimoMessage(ServerThread t, String userName, int imoticonNumber) {
         try {
-            if (t.s != null && !t.s.isClosed()&& !t.getThreadName().equals(userName)) {
+            if (t.s != null && !t.s.isClosed()) {
+//            	&& !t.getThreadName().equals(userName)
                 t.os.writeUTF("IMOMESSAGE" +userName+"/"+imoticonNumber);
                 t.os.flush();
                 System.out.println("IMOSENT: " + userName + " To: " + t.getThreadName() + " : " + imoticonNumber);

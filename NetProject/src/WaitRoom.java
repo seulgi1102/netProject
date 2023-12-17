@@ -437,7 +437,7 @@ public class WaitRoom extends JPanel implements ActionListener {
                         if (allInfoParts.length >= 2) {
                             String senderName = allInfoParts[0];
                             String messageContent = allInfoParts[1];
-                            appendText(allroom.talkRoom.textArea,id + senderName + ": "+messageContent + "\n");
+                            appendText(allroom.talkRoom.textArea, senderName + " : "+messageContent + "\n");
 //                            allroom.talkRoom.textArea.append(senderName + ": " + messageContent + "\n");
                         } else {
                             // Handle the case where the expected parts are not present in allInfo
@@ -525,7 +525,8 @@ public class WaitRoom extends JPanel implements ActionListener {
 	                            StyleConstants.setIcon(attrs, selectedIcon);
 	                            StyledDocument doc = allroom.talkRoom.textArea.getStyledDocument();
 	                            try {
-	                                doc.insertString(doc.getLength(), "Ignored Text", attrs); // 이미지를 올바르게 정렬하기 위한 텍스트
+	                            	appendText(allroom.talkRoom.textArea, senderName + " : ");
+	                                doc.insertString(doc.getLength(), "이모티콘 만료", attrs); // 이미지를 올바르게 정렬하기 위한 텍스트
 	                                doc.insertString(doc.getLength(), "\n", null); // 각 이미지 뒤에 줄 바꿈 추가
 	                            } catch (BadLocationException e) {
 	                                e.printStackTrace();
@@ -661,7 +662,7 @@ public class WaitRoom extends JPanel implements ActionListener {
 public class TalkRoom extends JFrame {
 	protected JScrollPane scrollPane;
     protected JTextField textField;
-    protected static JTextPane textArea;
+    protected static JTextPane textArea = new JTextPane();
     private DataInputStream is;
     private DataOutputStream os;
     static String id;
