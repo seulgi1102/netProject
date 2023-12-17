@@ -6,6 +6,7 @@ import java.awt.event.ActionListener;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Random;
 
 import javax.swing.JButton;
 import javax.swing.JList;
@@ -13,17 +14,21 @@ import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 import javax.swing.JTextField;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.Image;
 
 import javax.swing.JScrollPane;
 import javax.swing.JCheckBox;
 import javax.swing.AbstractButton;
 import javax.swing.GroupLayout;
+import javax.swing.ImageIcon;
 import javax.swing.GroupLayout.Alignment;
 import javax.swing.LayoutStyle.ComponentPlacement;
+import javax.swing.border.LineBorder;
 
 class showNewRoomPanel extends JFrame implements ActionListener {
 	JPanel newRoomPanel;
@@ -47,37 +52,61 @@ class showNewRoomPanel extends JFrame implements ActionListener {
 		this.item =currentItem;
 		this.selectedUserList = new ArrayList<>();
 		this.userNameList = new ArrayList<>();
-		setBounds(0, 0, 302, 403);
+		setBounds(0, 0, 334, 447);
+		setBackground(new Color(227, 227, 234));
 		newRoomPanel = new JPanel(); 
 		newRoomPanel.setBounds(0, 0, 313, 275);
+		newRoomPanel.setBackground(new Color(227, 227, 234));
 		getContentPane().add(newRoomPanel);
 		newRoomPanel.setLayout(null);
 		
 		createRoomBtn = new JButton("방만들기");
-	    createRoomBtn.setBounds(195, 4, 81, 23);
+		createRoomBtn.setBounds(214, 377, 94, 23);
 	    createRoomBtn.addActionListener(this);
 	    newRoomPanel.add(createRoomBtn);
-
-		
-		JLabel lblNewLabel = new JLabel("대화상대 선택");
-		lblNewLabel.setFont(new Font("맑은 고딕", Font.BOLD, 13));
-		lblNewLabel.setHorizontalAlignment(SwingConstants.LEFT);
-		lblNewLabel.setBounds(10, 115, 126, 19);
-		newRoomPanel.add(lblNewLabel);
 		
 		
 		textField = new JTextField();
-		textField.setBounds(10, 37, 266, 29);
+		textField.setBorder(new LineBorder(Color.WHITE));
+		textField.setFont(new Font("굴림", Font.PLAIN, 15));
+		textField.setBounds(16, 76, 288, 29);
 		newRoomPanel.add(textField);
 		textField.setColumns(10);
+		JPanel panel2 = new JPanel();
+	    panel2.setBackground(new Color(197, 95, 146));
+	    panel2.setBounds(0, 1, 526, 46);
+	    panel2.setLayout(null);
+	    
+		JLabel newRoom = new JLabel("방만들기");
+		newRoom.setBounds(12, 0, 86, 46);
+		newRoom.setFont(new Font("맑은 고딕", Font.BOLD, 20));
+		panel2.add(newRoom);
+		newRoomPanel.add(panel2);
 		
+		
+		ImageIcon door2Icon = new ImageIcon("./src/img/door2.png");
+        int backWidth = 40; 
+        int backHeight = 40; 
+        Image scaledImage4 = door2Icon.getImage().getScaledInstance(backWidth, backHeight, Image.SCALE_SMOOTH);
+        ImageIcon scaledIcon4 = new ImageIcon(scaledImage4);
+        JLabel doorLabel = new JLabel("");
+		doorLabel.setBounds(100, 1, 52, 45);
+		doorLabel.setIcon(scaledIcon4);
+		panel2.add(doorLabel);
+        
+		JLabel lblNewLabel = new JLabel("대화상대 선택");
+		lblNewLabel.setBounds(16, 146, 206, 33);
+		newRoomPanel.add(lblNewLabel);
+		lblNewLabel.setFont(new Font("맑은 고딕", Font.BOLD, 13));
+		lblNewLabel.setHorizontalAlignment(SwingConstants.LEFT);
 		JLabel lblNewLabel_1 = new JLabel("방 제목");
 		lblNewLabel_1.setHorizontalAlignment(SwingConstants.LEFT);
-		lblNewLabel_1.setFont(new Font("맑은 고딕", Font.BOLD, 13));
-		lblNewLabel_1.setBounds(10, 10, 126, 29);
+		lblNewLabel_1.setFont(new Font("맑은 고딕", Font.BOLD, 15));
+		lblNewLabel_1.setBounds(16, 54, 138, 23);
 		newRoomPanel.add(lblNewLabel_1);
 		
 		JPanel panel = new JPanel(new GridLayout(0, 1));
+		panel.setBorder(new LineBorder(Color.WHITE));
 		panel.setBounds(12, 99, 264, 224);
 		
 		
@@ -88,25 +117,28 @@ class showNewRoomPanel extends JFrame implements ActionListener {
 		    }
 		}
 		scroll = new JScrollPane(panel);
-		scroll.setBounds(12, 135, 264, 188);
+		scroll.setBounds(16, 179, 292, 193);
 		newRoomPanel.add(scroll);
 		
 		closeBtn = new JButton("취소");
-		closeBtn.setBounds(209, 333, 67, 23);
+		closeBtn.setBounds(135, 377, 67, 23);
 		newRoomPanel.add(closeBtn);
 		
 		panel_1 = new JPanel();
-		panel_1.setBounds(10, 76, 266, 29);
+		panel_1.setBackground(new Color(255, 255, 255));
+		panel_1.setBounds(74, 115, 196, 29);
 		newRoomPanel.add(panel_1);
-		panel_1.setLayout(new GridLayout(1, 1, 0, 0));
-		
-		lblNewLabel_2 = new JLabel("방장:");
-		lblNewLabel_2.setHorizontalAlignment(SwingConstants.LEFT);
-		lblNewLabel_2.setFont(new Font("맑은 고딕", Font.BOLD, 13));
-		panel_1.add(lblNewLabel_2);
+		panel_1.setLayout(null);
 		
 		lblNewLabel_3 = new JLabel(item.getText());
+		lblNewLabel_3.setBounds(12, 0, 184, 29);
 		panel_1.add(lblNewLabel_3);
+		
+		lblNewLabel_2 = new JLabel("방장:");
+		lblNewLabel_2.setBounds(26, 115, 36, 29);
+		newRoomPanel.add(lblNewLabel_2);
+		lblNewLabel_2.setHorizontalAlignment(SwingConstants.LEFT);
+		lblNewLabel_2.setFont(new Font("맑은 고딕", Font.BOLD, 15));
 		closeBtn.addActionListener(this);
 		/*for (ListItem item : itemList) {
             JCheckBox checkBox = new JCheckBox(item.getText());
@@ -154,6 +186,8 @@ class showNewRoomPanel extends JFrame implements ActionListener {
 	        }
 	        selectedUserList.add(item);
 	        String title = textField.getText();	
+	        Random random = new Random();
+	        int randomNumber = random.nextInt(8) + 1;
 	        //방의 제목, 선택한 유저의 이름을 서버 while문으로보냄
 	        try {
 				os.writeUTF("ROOM");
@@ -162,6 +196,7 @@ class showNewRoomPanel extends JFrame implements ActionListener {
 		        }
 		        os.writeUTF("/");
 		        os.writeUTF(title);
+		        os.writeInt(randomNumber);
 				os.flush();
 			} catch (IOException e2) {
 				// TODO Auto-generated catch block
@@ -206,5 +241,4 @@ class showNewRoomPanel extends JFrame implements ActionListener {
         }
         return userItem;
     }
-
 }

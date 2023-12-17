@@ -131,6 +131,19 @@ public class ChatServer {
                 t.os.flush();
                 System.out.println("IMOSENT: " + userName + " To: " + t.getThreadName() + " : " + imoticonNumber);
             } else {}
+        } catch (IOException e) {            
+        	e.printStackTrace();
+        }
+    }
+    public static void sendRoomNotice(ServerThread t, Room room) {
+        try {
+            if (t.s != null && !t.s.isClosed()) {
+                t.os.writeUTF("NOTICE" + room.getNotice());
+                t.os.flush();
+                System.out.println("NOTICE: " + room.getNotice());
+            } else {
+                
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -156,7 +169,7 @@ public class ChatServer {
     public static void sendLetter(ServerThread t, String receiver, String sender, String message) {
         try {
             if (t.s != null && !t.s.isClosed()&& !t.getThreadName().equals(sender)) {
-                t.os.writeUTF("MESSAGE" +"[쪽지] from: "+sender+"/"+message);
+                t.os.writeUTF("MESSAGE" +"[쪽지] from "+sender+"/"+message);
                 t.os.flush();
                 System.out.println("LETTER SENT: " + sender + " To: " + t.getThreadName() + " : " + message);
             } else {
@@ -197,7 +210,7 @@ public class ChatServer {
             		if (room != null) {
             			StringBuilder messageBuilder = new StringBuilder();
             			messageBuilder.append("RNAME:").append(room.getRoomName()).append("/")
-            			        .append("RNUM:").append(room.getRoomNumber()).append("/").append("USERID:");
+            			        .append("RNUM:").append(room.getRoomNumber()).append("/").append("RNOTICE:").append(room.getNotice()).append("/").append("RIMAGE:").append(room.getImageNumber()).append("/").append("RCONTENT:").append(room.getRoomContent()).append("/").append("USERID:");
 
             			// roomItems의 각 ListItem 객체에서 UserID를 가져와 추가
             			for (ListItem userRoom : room.getRoomItems()) {
@@ -371,10 +384,36 @@ class ServerThread extends Thread {
 						ChatServer.sendimoMessage(t,userName,imoticonNumber);
 					}
 				}
+				if(message.startsWith("NOTICE")) {
+					ArrayList<ServerThread> receiveThread = new ArrayList<>();
+					String allNotice = message.substring(6);
+					String[] allNoticeParts = allNotice.split("/");
+					//String messages = "		";
+					int roomNumber = Integer.parseInt(allNoticeParts[0]);
+					//if(allInfoParts.length > 2) {
+					String userName = allNoticeParts[1];
+					String content = allNoticeParts[2];
+					Room room = ChatServer.getRoomByRoomNumber(roomNumber);
+					room.setNotice(content);
+					System.out.println("서버 : 방 공지사항: "+ room.getNotice());
+					
+				}
+				if(message.startsWith("CONTENT")) {
+					ArrayList<ServerThread> receiveThread = new ArrayList<>();
+					String allNotice = message.substring(7);
+					String[] allNoticeParts = allNotice.split("/");
+					int roomNumber = Integer.parseInt(allNoticeParts[0]);
+					String userName = allNoticeParts[1];
+					String content = allNoticeParts[2];
+					Room room = ChatServer.getRoomByRoomNumber(roomNumber);
+					room.setRoomContent(content);
+					System.out.println("서버 : 방 채팅내역: "+ room.getRoomContent());
+					
+				}
 				/*
 				if(message.startsWith("ENTER")) {
 					//String allInfo = is.readUTF();
-					String allInfo = message.substring(5);
+					String allInfo = message.substring(5); 
 					Set<String> usersInRoom = new HashSet<>();
 					String[] allInfoParts = allInfo.split("/");
 					
@@ -387,6 +426,7 @@ class ServerThread extends Thread {
 					ArrayList<ServerThread> Threads = findUserThreadByRoom(room);
 					for(ServerThread t : Threads) {
 						ChatServer.sendEnterMessage(t,userName,messages,usersInRoom);
+						//입장하는 유저가 신호를 보내면 입장메시지를 보내는걸로 수정하기
 					}
 					}*/
                 if (message.startsWith("UPDATE")) {
@@ -398,7 +438,15 @@ class ServerThread extends Thread {
                         userToUpdate.setStatus(newStatus);
                     }
                 }
-
+                if(message.equals("REQUEST_ROOM_NOTICE")) {
+                	Integer roomNumber = Integer.parseInt(message.substring(6));
+                	Room room = ChatServer.getRoomByRoomNumber(roomNumber);
+                	ArrayList<ServerThread> Threads = findUserThreadByRoom(room);
+					for(ServerThread t: Threads) {
+						ChatServer.sendRoomNotice(this, room);
+					}
+                }
+                if(message.equals("SEND_ENTER_MESSAGE")) {}
                 if (message.equals("REQUEST_USER_LIST")) {
                     ChatServer.sendUserList();
                 }
@@ -406,9 +454,7 @@ class ServerThread extends Thread {
                 if (message.equals("REQUEST_ROOM_LIST")) {
                 	if(!(currentUserRooms == null)) {
                    ArrayList<ServerThread> threads = findUserThreadByCurrentRooms(currentUserRooms);
-                   for(Room room :currentUserRooms) {
-                	   
-                   }
+                  
                    for (ServerThread thread : threads) {
                         ArrayList<Room> updatedUserRooms = ChatServer.getRoomById(thread.getThreadName());
                         ChatServer.sendRoomInfo(updatedUserRooms, thread);
@@ -428,12 +474,14 @@ class ServerThread extends Thread {
                         }
 
                         String roomSubject = is.readUTF();
-
+                        Integer roomImageNumber = is.readInt();
                         for (String user : selectedUsers) {
                             selectedUserList.add(ChatServer.findUserById(user));
                         }
-
+                        
+                        System.out.println("roomImageNumber: "+ roomImageNumber);
                         Room room = new Room(ChatServer.getNextRoomNumber(), roomSubject, selectedUserList);
+                        room.setImageNumber(roomImageNumber);
                         System.out.println("Room no:" + room.getRoomNumber() + " Room name:" + room.getRoomName());
 
                         for (ListItem item : room.getRoomItems()) {

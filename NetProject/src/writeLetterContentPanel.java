@@ -1,3 +1,4 @@
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.EventQueue;
@@ -9,6 +10,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.JLabel;
@@ -66,22 +68,29 @@ public class writeLetterContentPanel extends JFrame implements ActionListener{
 		setBounds(0, 0, 464, 393);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
-
+		contentPane.setBackground(new Color(227, 227, 234));
 		setContentPane(contentPane);
 		contentPane.setLayout(null);
 		
 		textArea = new JTextArea();
-		textArea.setBounds(12, 58, 427, 245);
+		textArea.setBounds(1, 1, 425, 59);
+		textArea.setBorder(new LineBorder(Color.WHITE));
 		contentPane.add(textArea);
 		textArea.setLineWrap(true);      // Enable line wrapping
 		textArea.setWrapStyleWord(true);
 		textArea.setColumns(10);
 		textArea.setRows(10);
 		
-		JLabel lblNewLabel = new JLabel("To.");
-		lblNewLabel.setFont(new Font("굴림", Font.BOLD | Font.ITALIC, 20));
-		lblNewLabel.setBounds(12, 17, 49, 31);
-		contentPane.add(lblNewLabel);
+		JPanel panel = new JPanel();
+	    panel.setBackground(new Color(197, 95, 146));
+	    panel.setBounds(0, 0, 450, 46);
+	    panel.setLayout(null);
+	    
+		JLabel sendLabel = new JLabel("To.");
+		sendLabel.setFont(new Font("굴림", Font.BOLD | Font.ITALIC, 20));
+		sendLabel.setBounds(12, 0, 176, 46);
+		panel.add(sendLabel);
+		contentPane.add(panel);
 		
 		sendBtn = new JButton("보내기");
 		sendBtn.setBounds(344, 313, 95, 34);
@@ -93,11 +102,12 @@ public class writeLetterContentPanel extends JFrame implements ActionListener{
 		
 		JLabel lblNewLabel_1 = new JLabel(messageBuilder.toString());
 		lblNewLabel_1.setFont(new Font("굴림", Font.BOLD | Font.ITALIC, 20));
-		lblNewLabel_1.setBounds(57, 20, 331, 25);
-		contentPane.add(lblNewLabel_1);
+		lblNewLabel_1.setBounds(57, 0, 331, 45);
+		panel.add(lblNewLabel_1);
 		
 		JScrollPane scrollPane = new JScrollPane(textArea);
 		scrollPane.setBounds(12, 57, 427, 250);
+		scrollPane.setBorder(new LineBorder(Color.WHITE));
 		contentPane.add(scrollPane);
 		setVisible(true);
 		sendBtn.addActionListener(this);

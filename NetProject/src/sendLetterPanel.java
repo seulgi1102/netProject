@@ -15,15 +15,18 @@ import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 import javax.swing.JTextField;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.Image;
 
 import javax.swing.JScrollPane;
 import javax.swing.JCheckBox;
 import javax.swing.AbstractButton;
 import javax.swing.GroupLayout;
+import javax.swing.ImageIcon;
 import javax.swing.GroupLayout.Alignment;
 import javax.swing.LayoutStyle.ComponentPlacement;
 
@@ -43,6 +46,7 @@ class sendLetterPanel extends JFrame implements ActionListener {
 	protected DataInputStream is;
 	protected DataOutputStream os;
 	protected String id;
+	
 	sendLetterPanel(Room room, Socket s, Integer roomNumber, String id) throws IOException{
 		this.socket = s;
 		this.room = room;
@@ -56,6 +60,7 @@ class sendLetterPanel extends JFrame implements ActionListener {
 		newRoomPanel.setBounds(0, 0, 313, 275);
 		getContentPane().add(newRoomPanel);
 		newRoomPanel.setLayout(null);
+		newRoomPanel.setBackground(new Color(227, 227, 234));
 		
 		confirmBtn = new JButton("확인");
 	    confirmBtn.setBounds(195, 279, 81, 23);
@@ -66,14 +71,30 @@ class sendLetterPanel extends JFrame implements ActionListener {
 		JLabel lblNewLabel = new JLabel("대화상대 선택");
 		lblNewLabel.setFont(new Font("맑은 고딕", Font.BOLD, 13));
 		lblNewLabel.setHorizontalAlignment(SwingConstants.LEFT);
-		lblNewLabel.setBounds(10, 49, 126, 19);
+		lblNewLabel.setBounds(12, 46, 126, 33);
 		newRoomPanel.add(lblNewLabel);
 		
-		JLabel lblNewLabel_1 = new JLabel("[쪽지보내기]");
-		lblNewLabel_1.setHorizontalAlignment(SwingConstants.LEFT);
-		lblNewLabel_1.setFont(new Font("맑은 고딕", Font.BOLD, 13));
-		lblNewLabel_1.setBounds(10, 10, 126, 29);
-		newRoomPanel.add(lblNewLabel_1);
+		JPanel pane2 = new JPanel();
+	    pane2.setBackground(new Color(197, 95, 146));
+	    pane2.setBounds(0, 0, 288, 46);
+	    pane2.setLayout(null);
+	    
+	    ImageIcon letterIcon = new ImageIcon("C:\\net-project\\netProject\\NetProject\\src\\img\\letter2.png");
+        int noticeWidth = 45; 
+        int noticeHeight = 45; 
+        Image scaledImage = letterIcon.getImage().getScaledInstance(noticeWidth , noticeHeight, Image.SCALE_SMOOTH);
+        ImageIcon scaledIcon = new ImageIcon(scaledImage);
+        JLabel imageLabel= new JLabel("New label");
+        imageLabel.setIcon(scaledIcon);
+        imageLabel.setBounds(124, 0, 52, 46);
+	    
+		JLabel letterLabel = new JLabel("쪽지 보내기");
+		letterLabel.setFont(new Font("맑은 고딕", Font.BOLD, 20));
+		letterLabel.setBounds(12, 0, 127, 46);
+		pane2.add(letterLabel);
+		newRoomPanel.add(pane2);
+		//lblNewLabel_1.setBounds(128, 0, 52, 46);
+		pane2.add(imageLabel);
 		
 		JPanel panel = new JPanel(new GridLayout(0, 1));
 		panel.setBounds(12, 99, 264, 224);
